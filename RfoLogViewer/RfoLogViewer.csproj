@@ -56,12 +56,16 @@
     <Compile Include="Forms\ConnectionForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\ContextSelectionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\FindDialog.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Models\ContextEntry.cs" />
     <Compile Include="Models\LogEntry.cs" />
     <Compile Include="Models\LogNodeStatus.cs" />
     <Compile Include="Models\LogNodeStatusHelper.cs" />

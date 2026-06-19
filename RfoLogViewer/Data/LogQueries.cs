@@ -11,6 +11,25 @@ namespace RfoLogViewer.Data
         public const string OpenContext =
             @"BEGIN pack_context.contextid_open(:contextId, :userId, :module); END;";
 
+        public const string GetCurrentContextId =
+            @"SELECT pack_install.get_context_id() FROM dual";
+
+        public const string GetAccessibleContexts =
+            @"SELECT c.context_id,
+                     r.reporting_date,
+                     w.name AS workspace_name,
+                     c.description
+              FROM contexts c,
+                   reporting_days r,
+                   workspaces w,
+                   context_status cs
+              WHERE w.workspace_id = c.workspace_id
+                AND c.context_type = 'N'
+                AND r.rd_id = c.rd_id
+                AND pack_access.has_context_access(c.context_id) <> 'N'
+                AND cs.status_id(+) = c.status_id
+              ORDER BY r.reporting_date DESC, w.name, c.position";
+
         public const string RootLogKeys =
             @"SELECT root_log_key || ' (' || TO_CHAR(COUNT(*)) || ' sessions)' AS label,
                      root_log_key,

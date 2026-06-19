@@ -10,8 +10,13 @@ namespace RfoLogViewer.Data
     {
         private readonly OracleConnection _connection;
 
+        private readonly string login;
+        private readonly string dataSource;
+
         public OracleLogRepository(string dataSource, string user, string password)
         {
+            this.login = user;
+            this.dataSource = dataSource;
             var builder = new OracleConnectionStringBuilder
             {
                 DataSource = dataSource,
@@ -31,14 +36,18 @@ namespace RfoLogViewer.Data
                 var result = cmd.ExecuteScalar();
                 if (result == null || result == DBNull.Value)
                 {
-                    throw new InvalidOperationException(
-                        "Login not found in cd_users. Please verify the user name.");
+                    throw new InvalidOperationException("Login not found in cd_users. Please verify the user name.");
                 }
                 return Convert.ToInt64(result);
             }
         }
 
-        public void OpenContext(long contextId, long userId, string module = "ERS")
+        public string GetCurrentConnectionString()
+        {
+            return $"{this.login}@{this.dataSource}";
+        }
+
+        public void OpenContext(long contextId, long userId, string module = "RFoLogViewer")
         {
             using (var cmd = this.CreateCommand(LogQueries.OpenContext))
             {
@@ -47,6 +56,39 @@ namespace RfoLogViewer.Data
                 cmd.Parameters.Add("module", OracleDbType.Varchar2, module, ParameterDirection.Input);
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        public long GetCurrentContextId()
+        {
+            using (var cmd = this.CreateCommand(LogQueries.GetCurrentContextId))
+            {
+                return Convert.ToInt64(cmd.ExecuteScalar());
+            }
+        }
+
+        public IList<ContextEntry> GetAccessibleContexts()
+        {
+            var items = new List<ContextEntry>();
+            using (var cmd = this.CreateCommand(LogQueries.GetAccessibleContexts))
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    items.Add(new ContextEntry
+                    {
+                        ContextId = reader.GetInt64(reader.GetOrdinal("context_id")),
+                        ReportingDate = reader.GetDateTime(reader.GetOrdinal("reporting_date")),
+                        Workspace = reader.IsDBNull(reader.GetOrdinal("workspace_name"))
+                            ? string.Empty
+                            : reader.GetString(reader.GetOrdinal("workspace_name")),
+                        Description = reader.IsDBNull(reader.GetOrdinal("description"))
+                            ? string.Empty
+                            : reader.GetString(reader.GetOrdinal("description"))
+                    });
+                }
+            }
+
+            return items;
         }
 
         public IList<RootLogKeyNodeInfo> GetRootLogKeys(DateTime begin, DateTime end)

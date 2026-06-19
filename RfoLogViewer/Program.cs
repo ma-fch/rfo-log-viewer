@@ -38,7 +38,7 @@ namespace RfoLogViewer
                     var userId = repository.GetUserId(connectionForm.Login);
                     repository.OpenContext(connectionForm.ContextId, userId);
 
-                    Application.Run(new MainForm(repository));
+                    Application.Run(new MainForm(repository, userId, connectionForm.ContextId));
                 }
                 catch (Exception ex)
                 {
