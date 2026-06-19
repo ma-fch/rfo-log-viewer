@@ -24,6 +24,7 @@ namespace RfoLogViewer.Forms
         public ConnectionForm()
         {
             this.Text = "RFo Log Viewer - Connection";
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
