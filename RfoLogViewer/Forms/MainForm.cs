@@ -91,7 +91,7 @@ namespace RfoLogViewer.Forms
             this._contextId = contextId;
 
             this.Text = "RFo Log Viewer";
-            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            this.Icon = AppIcon.Get();
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Font = new Font("Segoe UI", 9F);
             this.LoadWindowSettings();
