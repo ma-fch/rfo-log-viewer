@@ -167,6 +167,7 @@ namespace RfoLogViewer.Forms
 			this._grid.ColumnDisplayIndexChanged += (_, __) => this.ScheduleColumnLayoutSave();
 			this._grid.CellDoubleClick += this.Grid_CellDoubleClick;
 			this._grid.CellMouseDown += this.Grid_CellMouseDown;
+			this._grid.AllowUserToResizeRows = false;
 
 			this._viewQueryMenuItem = new ToolStripMenuItem("View query...");
 			this._viewQueryMenuItem.Click += (_, __) => this.ViewSelectedLogQuery();
