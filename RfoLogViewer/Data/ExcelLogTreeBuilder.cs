@@ -72,9 +72,9 @@ namespace RfoLogViewer.Data
                     stack.Pop();
                 }
 
-                var label = !string.IsNullOrWhiteSpace(entry.Message)
+                var label = FormatNodeTitle(!string.IsNullOrWhiteSpace(entry.Message)
                     ? entry.Message
-                    : entry.LogKey ?? "Session";
+                    : entry.LogKey ?? "Session");
 
                 var tag = new ExcelTreeNodeTag
                 {
@@ -107,6 +107,22 @@ namespace RfoLogViewer.Data
             }
 
             AssignStatuses(rootLogKeyNode, entries);
+        }
+
+        private static string FormatNodeTitle(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+
+            const string prefix = "Begin ";
+            if (title.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return title.Substring(prefix.Length);
+            }
+
+            return title;
         }
 
         private static HashSet<long> CollectDescendantStructIds(TreeNode node)

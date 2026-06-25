@@ -140,6 +140,7 @@ namespace RfoLogViewer.Forms
             this._tree.Nodes.Add(rootNode);
             rootNode.Expand();
             this._lblStatus.Text = $"{entries.Count} log row(s) loaded. Select a tree node to display logs.";
+            this.Text += $" - {entries.Count} log row(s)";
         }
 
         private ToolStripDropDownButton CreateColumnVisibilityMenu()
