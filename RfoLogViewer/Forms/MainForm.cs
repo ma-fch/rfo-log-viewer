@@ -97,6 +97,11 @@ namespace RfoLogViewer.Forms
 			this.LoadWindowSettings();
 			this.LoadColumnVisibilitySettings();
 
+			var fileMenu = new ToolStripDropDownButton("File");
+			var readExcelItem = new ToolStripMenuItem("Read Excel log file...");
+			readExcelItem.Click += (_, __) => this.OpenExcelLogFile();
+			fileMenu.DropDownItems.Add(readExcelItem);
+
 			var databaseMenu = new ToolStripDropDownButton("Database");
 			var refreshItem = new ToolStripMenuItem("Refresh")
 			{
@@ -146,6 +151,7 @@ namespace RfoLogViewer.Forms
 				this.LogTableColumnMenuItem_Click);
 
 			this._toolStrip = new ToolStrip();
+			this._toolStrip.Items.Add(fileMenu);
 			this._toolStrip.Items.Add(databaseMenu);
 			this._toolStrip.Items.Add(findMenu);
 			this._toolStrip.Items.Add(this._logStructColumnsMenu);
@@ -212,6 +218,46 @@ namespace RfoLogViewer.Forms
 		private void InitializeTitle()
 		{
 			this.Text = $"RFo Log Viewer - {this._repository.GetCurrentConnectionString()} - contextId={this._repository.GetCurrentContextId()}";
+		}
+
+		private void OpenExcelLogFile()
+		{
+			using (var dialog = new OpenFileDialog
+			{
+				Title = "Read Excel log file",
+				Filter = "Excel files (*.xlsx;*.xls)|*.xlsx;*.xls|All files (*.*)|*.*",
+				CheckFileExists = true
+			})
+			{
+				if (dialog.ShowDialog(this) != DialogResult.OK)
+				{
+					return;
+				}
+
+				try
+				{
+					this.Cursor = Cursors.WaitCursor;
+					var entries = ExcelLogReader.Load(dialog.FileName);
+					if (entries.Count == 0)
+					{
+						MessageBox.Show(this, "No log rows found in the selected file.", "Read Excel log file",
+							MessageBoxButtons.OK, MessageBoxIcon.Information);
+						return;
+					}
+
+					var rootNode = ExcelLogTreeBuilder.Build(entries);
+					var viewer = new ExcelLogViewerForm(dialog.FileName, entries, rootNode);
+					viewer.Show();
+				}
+				catch (Exception ex)
+				{
+					MessageBox.Show(this, ex.Message, "Read Excel log file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
+				finally
+				{
+					this.Cursor = Cursors.Default;
+				}
+			}
 		}
 
 		private void InitializeTree()

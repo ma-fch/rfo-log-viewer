@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Windows.Forms;
 using RfoLogViewer.Data;
 using RfoLogViewer.Forms;
@@ -10,6 +11,7 @@ namespace RfoLogViewer
         [STAThread]
         private static void Main()
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
