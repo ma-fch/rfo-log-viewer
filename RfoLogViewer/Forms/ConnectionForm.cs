@@ -78,19 +78,52 @@ namespace RfoLogViewer.Forms
 			layout.Controls.Add(hint, 0, 5);
 			layout.SetColumnSpan(hint, 2);
 
-			var buttons = new FlowLayoutPanel
+			var footer = new TableLayoutPanel
 			{
 				Dock = DockStyle.Fill,
-				FlowDirection = FlowDirection.RightToLeft
+				ColumnCount = 3,
+				RowCount = 1,
+				Padding = new Padding(0, 3, 0, 0)
 			};
-			this._btnOk = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90 };
-			this._btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90 };
-			this._btnOpenExcelLogFile = new Button { Text = "Open Excel File", Width = 90 };
-			buttons.Controls.Add(this._btnOk);
-			buttons.Controls.Add(this._btnCancel);
-			buttons.Controls.Add(this._btnOpenExcelLogFile);
-			layout.Controls.Add(buttons, 0, 6);
-			layout.SetColumnSpan(buttons, 2);
+			footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+			footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+			footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+			footer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+			this._btnOpenExcelLogFile = new Button
+			{
+				Text = "Open Excel File...",
+				Width = 150,
+				Margin = new Padding(0)
+			};
+			var excelPanel = new FlowLayoutPanel
+			{
+				AutoSize = true,
+				AutoSizeMode = AutoSizeMode.GrowAndShrink,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = false,
+				Margin = new Padding(0, 0, 64, 0),
+			};
+			excelPanel.Controls.Add(this._btnOpenExcelLogFile);
+
+			this._btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Margin = new Padding(0, 0, 6, 0) };
+			this._btnOk = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90, Margin = new Padding(0) };
+			var okCancelPanel = new FlowLayoutPanel
+			{
+				AutoSize = true,
+				AutoSizeMode = AutoSizeMode.GrowAndShrink,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = false,
+				Margin = new Padding(0)
+			};
+			okCancelPanel.Controls.Add(this._btnOk);
+			okCancelPanel.Controls.Add(this._btnCancel);
+
+			footer.Controls.Add(new Panel(), 0, 0);
+			footer.Controls.Add(excelPanel, 1, 0);
+			footer.Controls.Add(okCancelPanel, 2, 0);
+			layout.Controls.Add(footer, 0, 6);
+			layout.SetColumnSpan(footer, 2);
 
 			this.Controls.Add(layout);
 			this.AcceptButton = this._btnOk;
