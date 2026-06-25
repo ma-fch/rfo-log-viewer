@@ -99,5 +99,45 @@ namespace RfoLogViewer.Properties
             get => (int)this[nameof(SplitterDistance)];
             set => this[nameof(SplitterDistance)] = value;
         }
+
+        [UserScopedSetting]
+        [DefaultSettingValue("")]
+        public string ExcelLogTableColumnLayout
+        {
+            get => (string)this[nameof(ExcelLogTableColumnLayout)];
+            set => this[nameof(ExcelLogTableColumnLayout)] = value;
+        }
+
+        [UserScopedSetting]
+        [DefaultSettingValue("")]
+        public string ExcelLogTableColumnVisibility
+        {
+            get => (string)this[nameof(ExcelLogTableColumnVisibility)];
+            set => this[nameof(ExcelLogTableColumnVisibility)] = value;
+        }
+
+        [UserScopedSetting]
+        [DefaultSettingValue("1400")]
+        public int ExcelLogViewerFormWidth
+        {
+            get => (int)this[nameof(ExcelLogViewerFormWidth)];
+            set => this[nameof(ExcelLogViewerFormWidth)] = value;
+        }
+
+        [UserScopedSetting]
+        [DefaultSettingValue("900")]
+        public int ExcelLogViewerFormHeight
+        {
+            get => (int)this[nameof(ExcelLogViewerFormHeight)];
+            set => this[nameof(ExcelLogViewerFormHeight)] = value;
+        }
+
+        [UserScopedSetting]
+        [DefaultSettingValue("380")]
+        public int ExcelLogViewerSplitterDistance
+        {
+            get => (int)this[nameof(ExcelLogViewerSplitterDistance)];
+            set => this[nameof(ExcelLogViewerSplitterDistance)] = value;
+        }
     }
 }

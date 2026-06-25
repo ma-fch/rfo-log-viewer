@@ -39,7 +39,11 @@ namespace RfoLogViewer.Forms
         private readonly LogDataGridView _grid;
         private readonly ToolStripLabel _lblStatus;
         private readonly SplitContainer _split;
+        private readonly Timer _layoutSaveTimer;
         private readonly Dictionary<string, bool> _logTableColumnVisibility;
+        private bool _suppressLayoutSave;
+        private bool _suppressWindowSettingsSave;
+        private int _pendingSplitterDistance = -1;
         private string _findText;
         private int _findLastRow = -1;
         private int _findLastColumn = -1;
@@ -53,11 +57,10 @@ namespace RfoLogViewer.Forms
             this.Icon = AppIcon.Get();
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Font = new Font("Segoe UI", 9F);
-            this.Width = 1400;
-            this.Height = 900;
+            this.LoadWindowSettings();
 
             this._logTableColumnVisibility = ColumnVisibilityStore.Load(
-                Settings.Default.LogTableColumnVisibility,
+                Settings.Default.ExcelLogTableColumnVisibility,
                 LogTableColumnHeaders.Keys);
 
             var findMenu = new ToolStripDropDownButton("Find");
@@ -102,18 +105,37 @@ namespace RfoLogViewer.Forms
             this._tree.AfterSelect += this.Tree_AfterSelect;
 
             this._grid = new LogDataGridView { Dock = DockStyle.Fill };
+            this._grid.ColumnWidthChanged += (_, __) => this.ScheduleColumnLayoutSave();
+            this._grid.ColumnDisplayIndexChanged += (_, __) => this.ScheduleColumnLayoutSave();
             this._grid.AllowUserToResizeRows = false;
 
             this._split = new SplitContainer
             {
-                Dock = DockStyle.Fill,
-                SplitterDistance = 380
+                Dock = DockStyle.Fill
             };
+            this._split.SplitterMoved += (_, __) => this.SaveWindowSettings();
             this._split.Panel1.Controls.Add(this._tree);
             this._split.Panel2.Controls.Add(this._grid);
 
+            this._layoutSaveTimer = new Timer { Interval = 400 };
+            this._layoutSaveTimer.Tick += (_, __) =>
+            {
+                this._layoutSaveTimer.Stop();
+                this.SaveColumnLayout();
+            };
+
             this.Controls.Add(this._split);
             this.Controls.Add(toolStrip);
+
+            this.ResizeEnd += (_, __) => this.SaveWindowSettings();
+            this.FormClosing += (_, __) =>
+            {
+                this.SaveColumnLayout();
+                this.SaveColumnVisibilitySettings();
+                this.SaveWindowSettings();
+            };
+            this.Load += (_, __) => this.ApplyPendingSplitterDistance();
+            this.Shown += (_, __) => this.ApplyPendingSplitterDistance();
 
             this._tree.Nodes.Add(rootNode);
             rootNode.Expand();
@@ -136,6 +158,7 @@ namespace RfoLogViewer.Forms
                     var key = (string)item.Tag;
                     this._logTableColumnVisibility[key] = item.Checked;
                     ColumnVisibilityStore.ApplyToGrid(this._grid, this._logTableColumnVisibility);
+                    this.SaveColumnVisibilitySettings();
                 };
                 menu.DropDownItems.Add(item);
             }
@@ -202,6 +225,7 @@ namespace RfoLogViewer.Forms
             this.AddColumn("Context", nameof(LogEntry.PartitionKey), 80);
 
             ColumnVisibilityStore.ApplyToGrid(this._grid, this._logTableColumnVisibility);
+            this.RestoreColumnLayout(Settings.Default.ExcelLogTableColumnLayout);
             this._grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
             this._grid.DataSource = entries;
             this.ApplyLogTypeColors();
@@ -223,6 +247,107 @@ namespace RfoLogViewer.Forms
                 column.DefaultCellStyle.Format = format;
             }
             this._grid.Columns.Add(column);
+        }
+
+        private void LoadWindowSettings()
+        {
+            var settings = Settings.Default;
+            this.Width = settings.ExcelLogViewerFormWidth > 0 ? settings.ExcelLogViewerFormWidth : 1400;
+            this.Height = settings.ExcelLogViewerFormHeight > 0 ? settings.ExcelLogViewerFormHeight : 900;
+            this._pendingSplitterDistance = settings.ExcelLogViewerSplitterDistance > 0
+                ? settings.ExcelLogViewerSplitterDistance
+                : 380;
+        }
+
+        private void ApplyPendingSplitterDistance()
+        {
+            if (this._pendingSplitterDistance < 0)
+            {
+                return;
+            }
+
+            var split = this._split;
+            var available = split.ClientSize.Width - split.SplitterWidth;
+            if (available < split.Panel1MinSize + split.Panel2MinSize)
+            {
+                return;
+            }
+
+            var distance = this._pendingSplitterDistance;
+            this._suppressWindowSettingsSave = true;
+            try
+            {
+                var max = available - split.Panel2MinSize;
+                split.SplitterDistance = Math.Max(split.Panel1MinSize, Math.Min(distance, max));
+                this._pendingSplitterDistance = -1;
+            }
+            finally
+            {
+                this._suppressWindowSettingsSave = false;
+            }
+        }
+
+        private void SaveWindowSettings()
+        {
+            if (this._suppressWindowSettingsSave)
+            {
+                return;
+            }
+
+            var settings = Settings.Default;
+            if (this.WindowState == FormWindowState.Normal)
+            {
+                settings.ExcelLogViewerFormWidth = this.Width;
+                settings.ExcelLogViewerFormHeight = this.Height;
+            }
+            settings.ExcelLogViewerSplitterDistance = this._split.SplitterDistance;
+            settings.Save();
+        }
+
+        private void RestoreColumnLayout(string layout)
+        {
+            if (string.IsNullOrWhiteSpace(layout))
+            {
+                return;
+            }
+
+            this._suppressLayoutSave = true;
+            try
+            {
+                DataGridViewLayoutStore.Apply(this._grid, layout);
+            }
+            finally
+            {
+                this._suppressLayoutSave = false;
+            }
+        }
+
+        private void ScheduleColumnLayoutSave()
+        {
+            if (this._suppressLayoutSave || this._grid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            this._layoutSaveTimer.Stop();
+            this._layoutSaveTimer.Start();
+        }
+
+        private void SaveColumnLayout()
+        {
+            if (this._suppressLayoutSave || this._grid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            Settings.Default.ExcelLogTableColumnLayout = DataGridViewLayoutStore.Serialize(this._grid);
+            Settings.Default.Save();
+        }
+
+        private void SaveColumnVisibilitySettings()
+        {
+            Settings.Default.ExcelLogTableColumnVisibility = ColumnVisibilityStore.Save(this._logTableColumnVisibility);
+            Settings.Default.Save();
         }
 
         private void ApplyLogTypeColors()
