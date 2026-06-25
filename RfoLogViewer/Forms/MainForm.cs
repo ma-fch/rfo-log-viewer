@@ -156,7 +156,7 @@ namespace RfoLogViewer.Forms
 			this._toolStrip.Items.Add(findMenu);
 			this._toolStrip.Items.Add(this._logStructColumnsMenu);
 			this._toolStrip.Items.Add(this._logTableColumnsMenu);
-			this._toolStrip.Items.Add(this._lblStatus);
+			//this._toolStrip.Items.Add(this._lblStatus);
 
 			this.KeyPreview = true;
 

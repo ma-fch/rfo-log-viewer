@@ -93,7 +93,7 @@ namespace RfoLogViewer.Forms
             var toolStrip = new ToolStrip();
             toolStrip.Items.Add(findMenu);
             toolStrip.Items.Add(columnsMenu);
-            toolStrip.Items.Add(this._lblStatus);
+            //toolStrip.Items.Add(this._lblStatus);
 
             this.KeyPreview = true;
 
