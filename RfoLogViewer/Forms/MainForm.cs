@@ -1344,6 +1344,16 @@ namespace RfoLogViewer.Forms
 				return true;
 			}
 
+			if (keyData == (Keys.Control | Keys.C) && this._tree.Focused)
+			{
+				var selectedNode = this._tree.SelectedNode;
+				if (selectedNode != null)
+				{
+					Clipboard.SetText(selectedNode.Text);
+					return true;
+				}
+			}
+
 			return base.ProcessCmdKey(ref msg, keyData);
 		}
 
