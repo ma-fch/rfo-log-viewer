@@ -71,6 +71,18 @@ namespace RfoLogViewer.Data
               FROM log_struct
               WHERE log_struct_id = :logStructId";
 
+        public const string LogSessionPictureIndex =
+            @"SELECT CASE WHEN l.end_timestamp IS NULL THEN
+                         CASE WHEN l.session_id IN (
+                           SELECT pack_install.compute_fermat_sid(sid, serial#, inst_id)
+                           FROM gv$session
+                         ) THEN 6 ELSE 8 END
+                       WHEN NVL(l.total_errors, 0) > 0 THEN 5
+                       WHEN NVL(l.total_warnings, 0) > 0 THEN 7
+                       ELSE 4 END AS picture_index
+              FROM log_struct l
+              WHERE l.log_struct_id = :logStructId";
+
         public const string RootLogSessions =
             @"SELECT *
               FROM (

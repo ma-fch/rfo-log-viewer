@@ -105,7 +105,7 @@ namespace RfoLogViewer.Forms
 			readExcelItem.Click += (_, __) => this.OpenExcelLogFile();
 			dataMenu.DropDownItems.Add(readExcelItem);
 
-			ToolStripMenuItem refreshItem = new ToolStripMenuItem("Refresh all")
+			ToolStripMenuItem refreshItem = new ToolStripMenuItem("Refresh")
 			{
 				ShortcutKeys = Keys.F5,
 				ShowShortcutKeys = true
@@ -174,7 +174,8 @@ namespace RfoLogViewer.Forms
 			this._tree = new TreeView
 			{
 				Dock = DockStyle.Fill,
-				HideSelection = false
+				HideSelection = false,
+				ImageList = LogTreeImageList.Get()
 			};
 			this._tree.BeforeExpand += this.Tree_BeforeExpand;
 			this._tree.AfterSelect += this.Tree_AfterSelect;
@@ -274,8 +275,13 @@ namespace RfoLogViewer.Forms
 		private void InitializeTree()
 		{
 			this._tree.Nodes.Clear();
-			var rootTag = new TreeNodeTag { ItemType = LogTreeItemType.Root, ChildrenLoaded = true };
+			var rootTag = new TreeNodeTag
+			{
+				ItemType = LogTreeItemType.Root,
+				ChildrenLoaded = true
+			};
 			var root = this.CreateNode("Log", rootTag);
+			LogNodeStatusHelper.ApplyToNode(root, LogNodeStatus.Normal);
 			this._tree.Nodes.Add(root);
 			this.AddPeriodNodes(root);
 			this.UpdateStatusFromChildren(root);
@@ -474,7 +480,7 @@ namespace RfoLogViewer.Forms
 		{
 			foreach (var session in this._repository.GetRootLogSessions(tag.PeriodBegin, tag.PeriodEnd, tag.RootLogKey))
 			{
-				node.Nodes.Add(this.CreateLogSessionNode(session));
+				node.Nodes.Add(this.CreateLogSessionNode(session, showTaskIcon: true));
 			}
 			this.UpdateStatusFromChildren(node);
 		}
@@ -488,12 +494,12 @@ namespace RfoLogViewer.Forms
 
 			foreach (var session in this._repository.GetChildLogSessions(tag.LogStructId.Value, tag.RootDurationSeconds))
 			{
-				node.Nodes.Add(this.CreateLogSessionNode(session));
+				node.Nodes.Add(this.CreateLogSessionNode(session, showTaskIcon: false));
 			}
 			this.UpdateStatusFromChildren(node);
 		}
 
-		private TreeNode CreateLogSessionNode(LogSessionNodeInfo session)
+		private TreeNode CreateLogSessionNode(LogSessionNodeInfo session, bool showTaskIcon)
 		{
 			var childTag = new TreeNodeTag
 			{
@@ -501,10 +507,15 @@ namespace RfoLogViewer.Forms
 				LogStructId = session.LogStructId,
 				ParentLogStructId = session.ParentLogStructId,
 				RootDurationSeconds = session.RootDurationSeconds,
+				ShowTaskIcon = showTaskIcon,
+				PictureIndex = showTaskIcon ? session.PictureIndex : 0,
 				Status = session.Status
 			};
 			var child = this.CreateNode(session.Label, childTag);
-			LogNodeStatusHelper.ApplyToNode(child, session.Status);
+			LogNodeStatusHelper.ApplyToNode(
+				child,
+				session.Status,
+				showTaskIcon ? session.PictureIndex : 0);
 			if (session.HasChildren)
 			{
 				child.Nodes.Add(this.CreatePlaceholderNode());
@@ -1080,15 +1091,26 @@ namespace RfoLogViewer.Forms
 		{
 			switch (tag.ItemType)
 			{
+				case LogTreeItemType.LogSession when tag.LogStructId.HasValue && tag.ShowTaskIcon:
+					node.Text = this._repository.GetLogSessionLabel(tag.LogStructId.Value, tag.RootDurationSeconds);
+					LogNodeStatusHelper.ApplyToNode(
+						node,
+						this._repository.GetLogSessionStatus(tag.LogStructId.Value),
+						this._repository.GetLogSessionPictureIndex(tag.LogStructId.Value));
+					break;
 				case LogTreeItemType.LogSession when tag.LogStructId.HasValue:
 					node.Text = this._repository.GetLogSessionLabel(tag.LogStructId.Value, tag.RootDurationSeconds);
 					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetLogSessionStatus(tag.LogStructId.Value));
 					break;
 				case LogTreeItemType.Period:
-					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetPeriodStatus(tag.PeriodBegin, tag.PeriodEnd));
+					LogNodeStatusHelper.ApplyToNode(
+						node,
+						this._repository.GetPeriodStatus(tag.PeriodBegin, tag.PeriodEnd));
 					break;
 				case LogTreeItemType.Orphan:
-					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetOrphanStatus(tag.PeriodBegin, tag.PeriodEnd));
+					LogNodeStatusHelper.ApplyToNode(
+						node,
+						this._repository.GetOrphanStatus(tag.PeriodBegin, tag.PeriodEnd));
 					break;
 			}
 		}
@@ -1139,11 +1161,23 @@ namespace RfoLogViewer.Forms
 				if (tag.ItemType == LogTreeItemType.LogSession && tag.LogStructId.HasValue)
 				{
 					node.Text = this._repository.GetLogSessionLabel(tag.LogStructId.Value, tag.RootDurationSeconds);
-					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetLogSessionStatus(tag.LogStructId.Value));
+					if (tag.ShowTaskIcon)
+					{
+						LogNodeStatusHelper.ApplyToNode(
+							node,
+							this._repository.GetLogSessionStatus(tag.LogStructId.Value),
+							this._repository.GetLogSessionPictureIndex(tag.LogStructId.Value));
+					}
+					else
+					{
+						LogNodeStatusHelper.ApplyToNode(node, this._repository.GetLogSessionStatus(tag.LogStructId.Value));
+					}
 				}
 				else if (tag.ItemType == LogTreeItemType.Period)
 				{
-					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetPeriodStatus(tag.PeriodBegin, tag.PeriodEnd));
+					LogNodeStatusHelper.ApplyToNode(
+						node,
+						this._repository.GetPeriodStatus(tag.PeriodBegin, tag.PeriodEnd));
 				}
 
 				if (tag.ChildrenLoaded)
@@ -1227,6 +1261,14 @@ namespace RfoLogViewer.Forms
 				return;
 			}
 
+			var tag = node.Tag as TreeNodeTag;
+			if (tag != null && tag.ShowTaskIcon)
+			{
+				// Task icon/status come from log_struct only, not nested log messages.
+				this.UpdateStatusFromChildren(node.Parent);
+				return;
+			}
+
 			var maxStatus = LogNodeStatus.Normal;
 			foreach (TreeNode child in node.Nodes)
 			{
@@ -1245,6 +1287,12 @@ namespace RfoLogViewer.Forms
 			foreach (TreeNode node in nodes)
 			{
 				this.RefreshTreeNodeColors(node.Nodes);
+				var tag = node.Tag as TreeNodeTag;
+				if (tag != null && tag.ShowTaskIcon)
+				{
+					continue;
+				}
+
 				if (node.Nodes.Count > 0)
 				{
 					var maxStatus = LogNodeStatus.Normal;
@@ -1257,7 +1305,7 @@ namespace RfoLogViewer.Forms
 					}
 					LogNodeStatusHelper.ApplyToNode(node, maxStatus);
 				}
-				else if (node.Tag is TreeNodeTag tag)
+				else if (tag != null)
 				{
 					LogNodeStatusHelper.ApplyToNode(node, tag.Status);
 				}

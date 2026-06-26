@@ -142,6 +142,21 @@ namespace RfoLogViewer.Data
             }
         }
 
+        public int GetLogSessionPictureIndex(long logStructId)
+        {
+            using (var cmd = this.CreateCommand(LogQueries.LogSessionPictureIndex))
+            {
+                cmd.Parameters.Add("logStructId", OracleDbType.Int64, logStructId, ParameterDirection.Input);
+                var result = cmd.ExecuteScalar();
+                if (result == null || result == DBNull.Value)
+                {
+                    return LogTreePictureIndex.SessionOk;
+                }
+
+                return Convert.ToInt32(result);
+            }
+        }
+
         private LogNodeStatus ReadStatusCode(string sql, DateTime begin, DateTime end)
         {
             using (var cmd = this.CreateCommand(sql))
@@ -275,6 +290,7 @@ namespace RfoLogViewer.Data
                                 ? (decimal?)null
                                 : reader.GetDecimal(reader.GetOrdinal("duration_seconds")),
                             HasChildren = reader.GetString(reader.GetOrdinal("has_children")) == "Y",
+                            PictureIndex = Convert.ToInt32(reader.GetValue(reader.GetOrdinal("picture_index"))),
                             Status = LogNodeStatusHelper.FromCounts(
                                 reader.GetDecimal(reader.GetOrdinal("total_errors")),
                                 reader.GetDecimal(reader.GetOrdinal("total_warnings")))
@@ -372,6 +388,7 @@ namespace RfoLogViewer.Data
         public long? ParentLogStructId { get; set; }
         public decimal? RootDurationSeconds { get; set; }
         public bool HasChildren { get; set; }
+        public int PictureIndex { get; set; }
         public LogNodeStatus Status { get; set; }
     }
 }
