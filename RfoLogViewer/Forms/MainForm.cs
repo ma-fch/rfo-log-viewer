@@ -1094,6 +1094,9 @@ namespace RfoLogViewer.Forms
 						this._repository.GetLogSessionStatus(tag.LogStructId.Value),
 						this._repository.GetLogSessionPictureIndex(tag.LogStructId.Value));
 					break;
+				case LogTreeItemType.RootLogKey:
+					this.RefreshRootLogKeyNode(node, tag);
+					break;
 				case LogTreeItemType.Period:
 					LogNodeStatusHelper.ApplyToNode(
 						node,
@@ -1105,6 +1108,18 @@ namespace RfoLogViewer.Forms
 						this._repository.GetOrphanStatus(tag.PeriodBegin, tag.PeriodEnd));
 					break;
 			}
+		}
+
+		private void RefreshRootLogKeyNode(TreeNode node, TreeNodeTag tag)
+		{
+			var info = this._repository.GetRootLogKey(tag.PeriodBegin, tag.PeriodEnd, tag.RootLogKey);
+			if (info != null)
+			{
+				node.Text = info.Label;
+				tag.Status = info.Status;
+			}
+
+			LogNodeStatusHelper.ApplyToNode(node, tag.Status);
 		}
 
 		private HashSet<string> CaptureExpandedNodeKeysInSubtree(TreeNode root)
@@ -1157,6 +1172,10 @@ namespace RfoLogViewer.Forms
 						node,
 						this._repository.GetLogSessionStatus(tag.LogStructId.Value),
 						this._repository.GetLogSessionPictureIndex(tag.LogStructId.Value));
+				}
+				else if (tag.ItemType == LogTreeItemType.RootLogKey)
+				{
+					this.RefreshRootLogKeyNode(node, tag);
 				}
 				else if (tag.ItemType == LogTreeItemType.Period)
 				{

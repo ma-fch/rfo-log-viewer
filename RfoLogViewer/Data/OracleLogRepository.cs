@@ -114,6 +114,30 @@ namespace RfoLogViewer.Data
             return items;
         }
 
+        public RootLogKeyNodeInfo GetRootLogKey(DateTime begin, DateTime end, string rootLogKey)
+        {
+            using (var cmd = this.CreateCommand(LogQueries.RootLogKeyInfo))
+            {
+                AddDateParameter(cmd, "beginDate", begin);
+                AddDateParameter(cmd, "endDate", end);
+                cmd.Parameters.Add("rootLogKey", OracleDbType.Varchar2, rootLogKey, ParameterDirection.Input);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    return new RootLogKeyNodeInfo
+                    {
+                        Label = reader.GetString(0),
+                        RootLogKey = rootLogKey,
+                        Status = LogNodeStatusHelper.FromCode(reader.GetString(1))
+                    };
+                }
+            }
+        }
+
         public LogNodeStatus GetPeriodStatus(DateTime begin, DateTime end)
         {
             return this.ReadStatusCode(LogQueries.PeriodStatus, begin, end);

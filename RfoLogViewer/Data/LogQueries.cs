@@ -45,6 +45,19 @@ namespace RfoLogViewer.Data
               GROUP BY root_log_key
               ORDER BY max_start DESC";
 
+        public const string RootLogKeyInfo =
+            @"SELECT root_log_key || ' (' || TO_CHAR(COUNT(*)) || ' sessions)' AS label,
+                     CASE WHEN MAX(NVL(total_errors, 0)) > 0 THEN 'E'
+                          WHEN MAX(NVL(total_warnings, 0)) > 0 THEN 'W'
+                          ELSE 'N' END AS node_status
+              FROM log_struct
+              WHERE parent_log_struct_id IS NULL
+                AND start_timestamp >= :beginDate
+                AND start_timestamp < :endDate
+                AND (context_id = pack_install.get_context_id() OR context_id IS NULL)
+                AND root_log_key = :rootLogKey
+              GROUP BY root_log_key";
+
         public const string PeriodStatus =
             @"SELECT CASE WHEN MAX(NVL(total_errors, 0)) > 0 THEN 'E'
                          WHEN MAX(NVL(total_warnings, 0)) > 0 THEN 'W'
