@@ -105,17 +105,24 @@ namespace RfoLogViewer.Forms
 			readExcelItem.Click += (_, __) => this.OpenExcelLogFile();
 			dataMenu.DropDownItems.Add(readExcelItem);
 
-			ToolStripMenuItem refreshItem = new ToolStripMenuItem("Refresh")
+			ToolStripMenuItem refreshItem = new ToolStripMenuItem("Refresh all")
 			{
 				ShortcutKeys = Keys.F5,
 				ShowShortcutKeys = true
 			};
 			refreshItem.Click += (_, __) => this.RefreshCurrentView(preserveTree: true);
+			ToolStripMenuItem refreshSelectedItem = new ToolStripMenuItem("Refresh selected")
+			{
+				ShortcutKeys = Keys.F7,
+				ShowShortcutKeys = true
+			};
+			refreshSelectedItem.Click += (_, __) => this.RefreshSelectedView();
 			ToolStripMenuItem selectContextItem = new ToolStripMenuItem("Select Context...");
 			selectContextItem.Click += (_, __) => this.ShowSelectContextDialog();
 			ToolStripMenuItem closeWindowItem = new ToolStripMenuItem("Close window");
 			closeWindowItem.Click += (_, __) => this.Close();
 			dataMenu.DropDownItems.Add(refreshItem);
+			dataMenu.DropDownItems.Add(refreshSelectedItem);
 			dataMenu.DropDownItems.Add(selectContextItem);
 			dataMenu.DropDownItems.Add(closeWindowItem);
 
@@ -990,6 +997,135 @@ namespace RfoLogViewer.Forms
 			}
 		}
 
+		private void RefreshSelectedView()
+		{
+			var selectedNode = this._tree.SelectedNode;
+			if (selectedNode == null)
+			{
+				return;
+			}
+
+			this.ClearFindState();
+			var selectedKey = (selectedNode.Tag as TreeNodeTag)?.NodeKey;
+			var expandedKeys = this.CaptureExpandedNodeKeysInSubtree(selectedNode);
+
+			try
+			{
+				this._loadingTreeNode = true;
+				this.Cursor = Cursors.WaitCursor;
+				this.RefreshTreeNodeAndDescendants(selectedNode);
+
+				for (var ancestor = selectedNode.Parent; ancestor != null; ancestor = ancestor.Parent)
+				{
+					this.UpdateStatusFromChildren(ancestor);
+				}
+
+				this.RestoreExpandedNodeKeysInSubtree(selectedNode, expandedKeys);
+
+				if (!string.IsNullOrEmpty(selectedKey))
+				{
+					this.SelectNodeByKey(this._tree.Nodes, selectedKey);
+				}
+
+				var nodeToLoad = this._tree.SelectedNode ?? selectedNode;
+				this.LoadGridForNode(nodeToLoad);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, ex.Message, "Refresh selected failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			finally
+			{
+				this.Cursor = Cursors.Default;
+				this._loadingTreeNode = false;
+			}
+		}
+
+		private void RefreshTreeNodeAndDescendants(TreeNode node)
+		{
+			var tag = node.Tag as TreeNodeTag;
+			if (tag == null)
+			{
+				return;
+			}
+
+			this.RefreshTreeNodeData(node, tag);
+
+			if (!tag.ChildrenLoaded)
+			{
+				return;
+			}
+
+			if (tag.ItemType == LogTreeItemType.Root)
+			{
+				foreach (TreeNode child in node.Nodes)
+				{
+					this.RefreshTreeNodeAndDescendants(child);
+				}
+				return;
+			}
+
+			node.Nodes.Clear();
+			tag.ChildrenLoaded = false;
+			this.LoadChildren(node, tag);
+			tag.ChildrenLoaded = true;
+
+			foreach (TreeNode child in node.Nodes)
+			{
+				this.RefreshTreeNodeAndDescendants(child);
+			}
+		}
+
+		private void RefreshTreeNodeData(TreeNode node, TreeNodeTag tag)
+		{
+			switch (tag.ItemType)
+			{
+				case LogTreeItemType.LogSession when tag.LogStructId.HasValue:
+					node.Text = this._repository.GetLogSessionLabel(tag.LogStructId.Value, tag.RootDurationSeconds);
+					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetLogSessionStatus(tag.LogStructId.Value));
+					break;
+				case LogTreeItemType.Period:
+					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetPeriodStatus(tag.PeriodBegin, tag.PeriodEnd));
+					break;
+				case LogTreeItemType.Orphan:
+					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetOrphanStatus(tag.PeriodBegin, tag.PeriodEnd));
+					break;
+			}
+		}
+
+		private HashSet<string> CaptureExpandedNodeKeysInSubtree(TreeNode root)
+		{
+			var keys = new HashSet<string>(StringComparer.Ordinal);
+			this.CaptureExpandedNodeKeysInSubtree(root, keys);
+			return keys;
+		}
+
+		private void CaptureExpandedNodeKeysInSubtree(TreeNode node, ISet<string> keys)
+		{
+			if (node.Tag is TreeNodeTag tag && node.IsExpanded)
+			{
+				keys.Add(tag.NodeKey);
+			}
+
+			foreach (TreeNode child in node.Nodes)
+			{
+				this.CaptureExpandedNodeKeysInSubtree(child, keys);
+			}
+		}
+
+		private void RestoreExpandedNodeKeysInSubtree(TreeNode node, ISet<string> keys)
+		{
+			if (node.Tag is TreeNodeTag tag && keys.Contains(tag.NodeKey))
+			{
+				node.Expand();
+			}
+
+			foreach (TreeNode child in node.Nodes)
+			{
+				this.RestoreExpandedNodeKeysInSubtree(child, keys);
+			}
+		}
+
 		private void RefreshLoadedTreeNodes(TreeNodeCollection nodes)
 		{
 			foreach (TreeNode node in nodes)
@@ -1148,6 +1284,12 @@ namespace RfoLogViewer.Forms
 			if (keyData == Keys.F5)
 			{
 				this.RefreshCurrentView(preserveTree: true);
+				return true;
+			}
+
+			if (keyData == Keys.F7)
+			{
+				this.RefreshSelectedView();
 				return true;
 			}
 
