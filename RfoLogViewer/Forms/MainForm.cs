@@ -97,39 +97,44 @@ namespace RfoLogViewer.Forms
 			this.LoadWindowSettings();
 			this.LoadColumnVisibilitySettings();
 
-			var fileMenu = new ToolStripDropDownButton("File");
-			var readExcelItem = new ToolStripMenuItem("Read Excel log file...");
+			ToolStripDropDownButton dataMenu = new ToolStripDropDownButton("Data");
+			ToolStripMenuItem readExcelItem = new ToolStripMenuItem("Read Excel log file...") {
+				ShortcutKeys = Keys.Control | Keys.O,
+				ShowShortcutKeys = true
+			};
 			readExcelItem.Click += (_, __) => this.OpenExcelLogFile();
-			fileMenu.DropDownItems.Add(readExcelItem);
+			dataMenu.DropDownItems.Add(readExcelItem);
 
-			var databaseMenu = new ToolStripDropDownButton("Database");
-			var refreshItem = new ToolStripMenuItem("Refresh")
+			ToolStripMenuItem refreshItem = new ToolStripMenuItem("Refresh")
 			{
 				ShortcutKeys = Keys.F5,
 				ShowShortcutKeys = true
 			};
 			refreshItem.Click += (_, __) => this.RefreshCurrentView(preserveTree: true);
-			var selectContextItem = new ToolStripMenuItem("Select Context...");
+			ToolStripMenuItem selectContextItem = new ToolStripMenuItem("Select Context...");
 			selectContextItem.Click += (_, __) => this.ShowSelectContextDialog();
-			databaseMenu.DropDownItems.Add(refreshItem);
-			databaseMenu.DropDownItems.Add(selectContextItem);
+			ToolStripMenuItem closeWindowItem = new ToolStripMenuItem("Close window");
+			closeWindowItem.Click += (_, __) => this.Close();
+			dataMenu.DropDownItems.Add(refreshItem);
+			dataMenu.DropDownItems.Add(selectContextItem);
+			dataMenu.DropDownItems.Add(closeWindowItem);
 
 			this._lblStatus = new ToolStripLabel { TextAlign = ContentAlignment.MiddleLeft };
 
-			var findMenu = new ToolStripDropDownButton("Find");
-			var findItem = new ToolStripMenuItem("Find...")
+			ToolStripDropDownButton findMenu = new ToolStripDropDownButton("Find");
+			ToolStripMenuItem findItem = new ToolStripMenuItem("Find...")
 			{
 				ShortcutKeys = Keys.Control | Keys.F,
 				ShowShortcutKeys = true
 			};
 			findItem.Click += (_, __) => this.ShowFindDialog();
-			var findNextItem = new ToolStripMenuItem("Find Next")
+			ToolStripMenuItem findNextItem = new ToolStripMenuItem("Find Next")
 			{
 				ShortcutKeys = Keys.F3,
 				ShowShortcutKeys = true
 			};
 			findNextItem.Click += (_, __) => this.FindNext();
-			var findPreviousItem = new ToolStripMenuItem("Find Previous")
+			ToolStripMenuItem findPreviousItem = new ToolStripMenuItem("Find Previous")
 			{
 				ShortcutKeys = Keys.Shift | Keys.F3,
 				ShowShortcutKeys = true
@@ -151,8 +156,7 @@ namespace RfoLogViewer.Forms
 				this.LogTableColumnMenuItem_Click);
 
 			this._toolStrip = new ToolStrip();
-			this._toolStrip.Items.Add(fileMenu);
-			this._toolStrip.Items.Add(databaseMenu);
+			this._toolStrip.Items.Add(dataMenu);
 			this._toolStrip.Items.Add(findMenu);
 			this._toolStrip.Items.Add(this._logStructColumnsMenu);
 			this._toolStrip.Items.Add(this._logTableColumnsMenu);
