@@ -179,6 +179,18 @@ namespace RfoLogViewer.Forms
 			};
 			this._tree.BeforeExpand += this.Tree_BeforeExpand;
 			this._tree.AfterSelect += this.Tree_AfterSelect;
+			this._tree.NodeMouseClick += this.Tree_NodeMouseClick;
+
+			var treeContextMenu = new ContextMenuStrip();
+			var treeCopyMenuItem = new ToolStripMenuItem("Copy")
+			{
+				ShortcutKeys = Keys.Control | Keys.C,
+				ShowShortcutKeys = true
+			};
+			treeCopyMenuItem.Click += (_, __) => this.CopySelectedTreeNodeLabel();
+			treeContextMenu.Opening += this.TreeContextMenu_Opening;
+			treeContextMenu.Items.Add(treeCopyMenuItem);
+			this._tree.ContextMenuStrip = treeContextMenu;
 
 			this._grid = new LogDataGridView { Dock = DockStyle.Fill };
 			this._grid.ColumnWidthChanged += (_, __) => this.ScheduleColumnLayoutSave();
@@ -517,6 +529,34 @@ namespace RfoLogViewer.Forms
 				child.Nodes.Add(this.CreatePlaceholderNode());
 			}
 			return child;
+		}
+
+		private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+		{
+			if (e.Button == MouseButtons.Right)
+			{
+				this._tree.SelectedNode = e.Node;
+			}
+		}
+
+		private void TreeContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			var menu = (ContextMenuStrip)sender;
+			var canCopy = this._tree.SelectedNode?.Tag is TreeNodeTag;
+			menu.Items[0].Enabled = canCopy;
+			if (!canCopy)
+			{
+				e.Cancel = true;
+			}
+		}
+
+		private void CopySelectedTreeNodeLabel()
+		{
+			var selectedNode = this._tree.SelectedNode;
+			if (selectedNode?.Tag is TreeNodeTag)
+			{
+				Clipboard.SetText(selectedNode.Text);
+			}
 		}
 
 		private void Tree_AfterSelect(object sender, TreeViewEventArgs e)
@@ -1365,10 +1405,9 @@ namespace RfoLogViewer.Forms
 
 			if (keyData == (Keys.Control | Keys.C) && this._tree.Focused)
 			{
-				var selectedNode = this._tree.SelectedNode;
-				if (selectedNode != null)
+				if (this._tree.SelectedNode?.Tag is TreeNodeTag)
 				{
-					Clipboard.SetText(selectedNode.Text);
+					this.CopySelectedTreeNodeLabel();
 					return true;
 				}
 			}

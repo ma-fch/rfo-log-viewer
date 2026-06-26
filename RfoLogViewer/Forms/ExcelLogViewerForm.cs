@@ -103,6 +103,18 @@ namespace RfoLogViewer.Forms
                 HideSelection = false
             };
             this._tree.AfterSelect += this.Tree_AfterSelect;
+            this._tree.NodeMouseClick += this.Tree_NodeMouseClick;
+
+            var treeContextMenu = new ContextMenuStrip();
+            var treeCopyMenuItem = new ToolStripMenuItem("Copy")
+            {
+                ShortcutKeys = Keys.Control | Keys.C,
+                ShowShortcutKeys = true
+            };
+            treeCopyMenuItem.Click += (_, __) => this.CopySelectedTreeNodeLabel();
+            treeContextMenu.Opening += this.TreeContextMenu_Opening;
+            treeContextMenu.Items.Add(treeCopyMenuItem);
+            this._tree.ContextMenuStrip = treeContextMenu;
 
             this._grid = new LogDataGridView { Dock = DockStyle.Fill };
             this._grid.ColumnWidthChanged += (_, __) => this.ScheduleColumnLayoutSave();
@@ -165,6 +177,34 @@ namespace RfoLogViewer.Forms
             }
 
             return menu;
+        }
+
+        private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                this._tree.SelectedNode = e.Node;
+            }
+        }
+
+        private void TreeContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var menu = (ContextMenuStrip)sender;
+            var canCopy = this._tree.SelectedNode?.Tag is ExcelTreeNodeTag;
+            menu.Items[0].Enabled = canCopy;
+            if (!canCopy)
+            {
+                e.Cancel = true;
+            }
+        }
+
+        private void CopySelectedTreeNodeLabel()
+        {
+            var selectedNode = this._tree.SelectedNode;
+            if (selectedNode?.Tag is ExcelTreeNodeTag)
+            {
+                Clipboard.SetText(selectedNode.Text);
+            }
         }
 
         private void Tree_AfterSelect(object sender, TreeViewEventArgs e)
@@ -391,6 +431,15 @@ namespace RfoLogViewer.Forms
             {
                 this.FindPrevious();
                 return true;
+            }
+
+            if (keyData == (Keys.Control | Keys.C) && this._tree.Focused)
+            {
+                if (this._tree.SelectedNode?.Tag is ExcelTreeNodeTag)
+                {
+                    this.CopySelectedTreeNodeLabel();
+                    return true;
+                }
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
