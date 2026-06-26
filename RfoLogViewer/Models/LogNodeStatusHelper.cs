@@ -74,8 +74,14 @@ namespace RfoLogViewer.Models
             int resolvedIndex;
             switch (tag.ItemType)
             {
+                case LogTreeItemType.Root:
+                    resolvedIndex = LogTreePictureIndex.Log;
+                    break;
                 case LogTreeItemType.Period:
                     resolvedIndex = LogTreePictureIndex.Period;
+                    break;
+                case LogTreeItemType.RootLogKey:
+                    resolvedIndex = LogTreePictureIndex.RootLogKey;
                     break;
                 case LogTreeItemType.Orphan:
                     resolvedIndex = LogTreePictureIndex.Log;
