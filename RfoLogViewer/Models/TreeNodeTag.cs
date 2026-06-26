@@ -17,7 +17,6 @@ namespace RfoLogViewer.Models
         public bool ChildrenLoaded { get; set; }
         public LogNodeStatus Status { get; set; }
         public int PictureIndex { get; set; }
-        public bool ShowTaskIcon { get; set; }
 
         public string NodeKey
         {

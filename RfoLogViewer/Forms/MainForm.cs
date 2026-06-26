@@ -480,7 +480,7 @@ namespace RfoLogViewer.Forms
 		{
 			foreach (var session in this._repository.GetRootLogSessions(tag.PeriodBegin, tag.PeriodEnd, tag.RootLogKey))
 			{
-				node.Nodes.Add(this.CreateLogSessionNode(session, showTaskIcon: true));
+				node.Nodes.Add(this.CreateLogSessionNode(session));
 			}
 			this.UpdateStatusFromChildren(node);
 		}
@@ -494,12 +494,12 @@ namespace RfoLogViewer.Forms
 
 			foreach (var session in this._repository.GetChildLogSessions(tag.LogStructId.Value, tag.RootDurationSeconds))
 			{
-				node.Nodes.Add(this.CreateLogSessionNode(session, showTaskIcon: false));
+				node.Nodes.Add(this.CreateLogSessionNode(session));
 			}
 			this.UpdateStatusFromChildren(node);
 		}
 
-		private TreeNode CreateLogSessionNode(LogSessionNodeInfo session, bool showTaskIcon)
+		private TreeNode CreateLogSessionNode(LogSessionNodeInfo session)
 		{
 			var childTag = new TreeNodeTag
 			{
@@ -507,15 +507,11 @@ namespace RfoLogViewer.Forms
 				LogStructId = session.LogStructId,
 				ParentLogStructId = session.ParentLogStructId,
 				RootDurationSeconds = session.RootDurationSeconds,
-				ShowTaskIcon = showTaskIcon,
-				PictureIndex = showTaskIcon ? session.PictureIndex : 0,
+				PictureIndex = session.PictureIndex,
 				Status = session.Status
 			};
 			var child = this.CreateNode(session.Label, childTag);
-			LogNodeStatusHelper.ApplyToNode(
-				child,
-				session.Status,
-				showTaskIcon ? session.PictureIndex : 0);
+			LogNodeStatusHelper.ApplyToNode(child, session.Status, session.PictureIndex);
 			if (session.HasChildren)
 			{
 				child.Nodes.Add(this.CreatePlaceholderNode());
@@ -1091,16 +1087,12 @@ namespace RfoLogViewer.Forms
 		{
 			switch (tag.ItemType)
 			{
-				case LogTreeItemType.LogSession when tag.LogStructId.HasValue && tag.ShowTaskIcon:
+				case LogTreeItemType.LogSession when tag.LogStructId.HasValue:
 					node.Text = this._repository.GetLogSessionLabel(tag.LogStructId.Value, tag.RootDurationSeconds);
 					LogNodeStatusHelper.ApplyToNode(
 						node,
 						this._repository.GetLogSessionStatus(tag.LogStructId.Value),
 						this._repository.GetLogSessionPictureIndex(tag.LogStructId.Value));
-					break;
-				case LogTreeItemType.LogSession when tag.LogStructId.HasValue:
-					node.Text = this._repository.GetLogSessionLabel(tag.LogStructId.Value, tag.RootDurationSeconds);
-					LogNodeStatusHelper.ApplyToNode(node, this._repository.GetLogSessionStatus(tag.LogStructId.Value));
 					break;
 				case LogTreeItemType.Period:
 					LogNodeStatusHelper.ApplyToNode(
@@ -1161,17 +1153,10 @@ namespace RfoLogViewer.Forms
 				if (tag.ItemType == LogTreeItemType.LogSession && tag.LogStructId.HasValue)
 				{
 					node.Text = this._repository.GetLogSessionLabel(tag.LogStructId.Value, tag.RootDurationSeconds);
-					if (tag.ShowTaskIcon)
-					{
-						LogNodeStatusHelper.ApplyToNode(
-							node,
-							this._repository.GetLogSessionStatus(tag.LogStructId.Value),
-							this._repository.GetLogSessionPictureIndex(tag.LogStructId.Value));
-					}
-					else
-					{
-						LogNodeStatusHelper.ApplyToNode(node, this._repository.GetLogSessionStatus(tag.LogStructId.Value));
-					}
+					LogNodeStatusHelper.ApplyToNode(
+						node,
+						this._repository.GetLogSessionStatus(tag.LogStructId.Value),
+						this._repository.GetLogSessionPictureIndex(tag.LogStructId.Value));
 				}
 				else if (tag.ItemType == LogTreeItemType.Period)
 				{
@@ -1262,9 +1247,9 @@ namespace RfoLogViewer.Forms
 			}
 
 			var tag = node.Tag as TreeNodeTag;
-			if (tag != null && tag.ShowTaskIcon)
+			if (tag != null && tag.ItemType == LogTreeItemType.LogSession)
 			{
-				// Task icon/status come from log_struct only, not nested log messages.
+				// Each log_struct row has its own status icon, independent of child logs.
 				this.UpdateStatusFromChildren(node.Parent);
 				return;
 			}
@@ -1288,7 +1273,7 @@ namespace RfoLogViewer.Forms
 			{
 				this.RefreshTreeNodeColors(node.Nodes);
 				var tag = node.Tag as TreeNodeTag;
-				if (tag != null && tag.ShowTaskIcon)
+				if (tag != null && tag.ItemType == LogTreeItemType.LogSession)
 				{
 					continue;
 				}

@@ -80,7 +80,7 @@ namespace RfoLogViewer.Models
                 case LogTreeItemType.Orphan:
                     resolvedIndex = LogTreePictureIndex.Log;
                     break;
-                case LogTreeItemType.LogSession when tag.ShowTaskIcon:
+                case LogTreeItemType.LogSession:
                     if (pictureIndex > 0)
                     {
                         tag.PictureIndex = pictureIndex;
