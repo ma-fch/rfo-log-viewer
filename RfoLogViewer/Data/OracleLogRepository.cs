@@ -181,6 +181,15 @@ namespace RfoLogViewer.Data
             }
         }
 
+        public void PurgeLogStructId(long logStructId)
+        {
+            using (var cmd = this.CreateCommand(LogQueries.PurgeLogStructId))
+            {
+                cmd.Parameters.Add("logStructId", OracleDbType.Int64, logStructId, ParameterDirection.Input);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         private LogNodeStatus ReadStatusCode(string sql, DateTime begin, DateTime end)
         {
             using (var cmd = this.CreateCommand(sql))

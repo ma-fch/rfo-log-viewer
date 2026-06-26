@@ -201,5 +201,8 @@ namespace RfoLogViewer.Data
 
         public const string GetLogQuery =
             @"SELECT query FROM fdw_log_query WHERE log_id = :logId";
+
+        public const string PurgeLogStructId =
+            @"BEGIN pack_log.purge_log_struct_id(:logStructId); END;";
     }
 }

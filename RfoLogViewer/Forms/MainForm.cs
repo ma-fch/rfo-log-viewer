@@ -71,6 +71,7 @@ namespace RfoLogViewer.Forms
 		private readonly SplitContainer _split;
 		private readonly Timer _layoutSaveTimer;
 		private readonly ToolStripMenuItem _viewQueryMenuItem;
+		private readonly ToolStripMenuItem _treeDeleteLogStructMenuItem;
 		private bool _loadingTreeNode;
 		private bool _suppressLayoutSave;
 		private bool _isLogTableView;
@@ -188,8 +189,16 @@ namespace RfoLogViewer.Forms
 				ShowShortcutKeys = true
 			};
 			treeCopyMenuItem.Click += (_, __) => this.CopySelectedTreeNodeLabel();
+			this._treeDeleteLogStructMenuItem = new ToolStripMenuItem("Delete log struct")
+			{
+				ShortcutKeys = Keys.Delete,
+				ShowShortcutKeys = true
+			};
+			this._treeDeleteLogStructMenuItem.Click += (_, __) => this.DeleteSelectedLogStruct();
 			treeContextMenu.Opening += this.TreeContextMenu_Opening;
 			treeContextMenu.Items.Add(treeCopyMenuItem);
+			treeContextMenu.Items.Add(new ToolStripSeparator());
+			treeContextMenu.Items.Add(this._treeDeleteLogStructMenuItem);
 			this._tree.ContextMenuStrip = treeContextMenu;
 
 			this._grid = new LogDataGridView { Dock = DockStyle.Fill };
@@ -541,12 +550,76 @@ namespace RfoLogViewer.Forms
 
 		private void TreeContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-			var menu = (ContextMenuStrip)sender;
-			var canCopy = this._tree.SelectedNode?.Tag is TreeNodeTag;
-			menu.Items[0].Enabled = canCopy;
-			if (!canCopy)
+			if (!(this._tree.SelectedNode?.Tag is TreeNodeTag tag))
 			{
 				e.Cancel = true;
+				return;
+			}
+
+			this._treeDeleteLogStructMenuItem.Enabled = this.CanDeleteLogStruct(tag);
+		}
+
+		private bool CanDeleteLogStruct(TreeNodeTag tag)
+		{
+			return tag.ItemType == LogTreeItemType.LogSession
+				&& tag.LogStructId.HasValue
+				&& !tag.ParentLogStructId.HasValue;
+		}
+
+		private void DeleteSelectedLogStruct()
+		{
+			var node = this._tree.SelectedNode;
+			if (!(node?.Tag is TreeNodeTag tag) || !this.CanDeleteLogStruct(tag))
+			{
+				return;
+			}
+
+			long logStructId = tag.LogStructId.Value;
+			string message = $"Are you sure ?{Environment.NewLine}Log struct id : {logStructId}{Environment.NewLine}"
+				+ "This will permanently delete this log session and all its nested log data.";
+			if (MessageBox.Show(
+				this,
+				message,
+				"Delete log struct",
+				MessageBoxButtons.YesNo,
+				MessageBoxIcon.Warning,
+				MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+			{
+				return;
+			}
+
+			try
+			{
+				this.Cursor = Cursors.WaitCursor;
+				this._repository.PurgeLogStructId(logStructId);
+
+				TreeNode parent = node.Parent;
+				node.Remove();
+
+				if (parent?.Tag is TreeNodeTag parentTag)
+				{
+					if (parentTag.ItemType == LogTreeItemType.RootLogKey)
+					{
+						this.RefreshRootLogKeyNode(parent, parentTag);
+					}
+
+					this.UpdateStatusFromChildren(parent);
+					this._tree.SelectedNode = parent;
+					this.LoadGridForNode(parent);
+				}
+				else
+				{
+					this._grid.DataSource = null;
+					this._grid.Columns.Clear();
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, ex.Message, "Delete log struct", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			finally
+			{
+				this.Cursor = Cursors.Default;
 			}
 		}
 
