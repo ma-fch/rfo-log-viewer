@@ -70,7 +70,7 @@ The main window opens and loads the logs for the selected context.
 
 ### Blocked by Windows Defender
 
-If Windows Defender blocks the application and clicking **Unblock** on the Defender pop-up still does not help, add an exclusion from an **elevated** PowerShell prompt:
+If Windows Defender blocks the application and clicking **Unblock** on the Defender pop-up still does not help, add an exclusion from an **elevated** (admin) PowerShell prompt:
 
 ```powershell
 Add-MpPreference -ExclusionPath 'C:\Tools\RfoLogViewer\RfoLogViewer.exe'
