@@ -1,0 +1,45 @@
+name: Build RfoLogViewer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write   # only if you publish GitHub Releases
+
+jobs:
+  build:
+    runs-on: windows-2022
+    env:
+      Solution_Path: RfoLogViewer.sln
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - uses: nuget/setup-nuget@v2
+
+      - run: nuget restore $env:Solution_Path
+
+      - run: msbuild $env:Solution_Path /p:Configuration=Release
+
+      - name: Create zip
+        working-directory: RfoLogViewer/bin/Release
+        run: 7z a RfoLogViewer.zip *
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RfoLogViewer
+          path: RfoLogViewer/bin/Release/RfoLogViewer.zip
+
+      # Optional: only on push to main, not on PRs
+      - uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          files: RfoLogViewer/bin/Release/RfoLogViewer.zip
+          draft: true
+          prerelease: true
+          tag_name: v${{ github.run_number }}
