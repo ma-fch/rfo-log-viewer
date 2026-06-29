@@ -41,7 +41,7 @@
       <Private>true</Private>
     </Reference>
     <Reference Include="Oracle.ManagedDataAccess, Version=4.122.19.1, Culture=neutral, PublicKeyToken=89b483fcf93144b, processorArchitecture=MSIL">
-      <HintPath>C:\Progs\Oracle\oracle19.3_srv\ora19\ODP.NET\managed\common\Oracle.ManagedDataAccess.dll</HintPath>
+      <HintPath>..\packages\Oracle.ManagedDataAccess.19.26.0\lib\net462\Oracle.ManagedDataAccess.dll</HintPath>
       <Private>true</Private>
     </Reference>
     <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -129,6 +129,7 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Run "nuget restore RfoLogViewer.sln" to download them.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\ExcelDataReader.3.7.0\lib\net462\ExcelDataReader.dll')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ExcelDataReader.3.7.0'))" />
+    <Error Condition="!Exists('..\packages\Oracle.ManagedDataAccess.19.26.0\lib\net462\Oracle.ManagedDataAccess.dll')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Oracle.ManagedDataAccess.19.26.0'))" />
     <Error Condition="!Exists('..\packages\System.Text.Encoding.CodePages.8.0.0\lib\net462\System.Text.Encoding.CodePages.dll')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Text.Encoding.CodePages.8.0.0'))" />
     <Error Condition="!Exists('..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Memory.4.5.5'))" />
     <Error Condition="!Exists('..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0'))" />
