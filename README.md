@@ -4,11 +4,23 @@ A simple and efficient Windows tool to read and analyze logs from database envir
 
 ## Features
 
-- Browse and inspect application logs stored in an Oracle database
-- Open Excel log files exported from MAUIWeb (`.xlsx` / `.xls`)
-- Navigate log entries in a tree view with detailed data grids
-- Select the visible columns, resize and reorder them : your settings are saved for next sessions
-- Navigate across DB contexts
+### Explore logs and retrieve dynamic queries
+
+Browse logs in a tree view grouped by date and session. Right-click a log entry that contains a saved query and choose **View query...** to open or download the dynamic SQL from the database.
+
+![Explore logs and retrieve dynamic queries](docs/screenshots/explore-logs-get-query.png)
+
+### Customize columns for readability
+
+Show or hide columns from the **Log Columns** and **Log Struct Columns** menus. The tool remembers your column visibility, order, and widths between sessions.
+
+![Show or hide columns](docs/screenshots/select-columns.png)
+
+### Read exported Excel logs
+
+Open an Excel workbook (typically exported from MAUIWeb) and explore it with the same tree view and data grid as live database logs — no database connection required.
+
+![Explore logs exported to Excel](docs/screenshots/explore-exported-logs.png)
 
 ## Requirements
 
