@@ -49,7 +49,7 @@ No database connection is required for this mode.
    - a **TNS alias** defined in your `tnsnames.ora`, if Oracle client naming is configured on your machine, or
    - a full **data source / connection string**, for example:  
      `adb-xxx.ad.regbanking.net/db1_pdb1`
-3. Enter the **Context ID** (numeric identifier of the log context to open)
+3. Enter the **Context ID** (RFo context id, for example 1)
 4. Click **OK**
 
 The main window opens and loads the logs for the selected context.
@@ -58,7 +58,7 @@ The main window opens and loads the logs for the selected context.
 
 ### Blocked by Windows Defender
 
-If Windows Defender blocks the application and clicking **Unblock** in the file properties still does not help, add an exclusion from an **elevated** PowerShell prompt:
+If Windows Defender blocks the application and clicking **Unblock** on the Defender pop-up still does not help, add an exclusion from an **elevated** PowerShell prompt:
 
 ```powershell
 Add-MpPreference -ExclusionPath 'C:\Tools\RfoLogViewer\RfoLogViewer.exe'
