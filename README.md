@@ -87,7 +87,7 @@ If you get a timeout error when trying to reach any DataBase, despite it seems t
 
 ### Persistent settings
 
-RfoLogViewer stores its settings in %LOCALAPPDATA%\RfoLogViewer\*\*\user.config as per the .NET Framework configuration system.
+RfoLogViewer stores its settings in `%LOCALAPPDATA%\RfoLogViewer\*\*\user.config` as per the .NET Framework configuration system.
 
 ## Building from source
 
