@@ -85,6 +85,10 @@ If you get a timeout error when trying to reach any DataBase, despite it seems t
 - Try to comment on the `DIRECTORY_SERVERS` line by adding a leading `#`
 - Try again to connect to a DB with RfoLogViewer
 
+### Persistent settings
+
+RfoLogViewer stores its settings in %LOCALAPPDATA%\RfoLogViewer\*\*\user.config as per the .NET Framework configuration system.
+
 ## Building from source
 
 Requires Visual Studio 2022 (or MSBuild) and the .NET Framework 4.8 developer pack.
