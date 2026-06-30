@@ -78,6 +78,13 @@ Add-MpPreference -ExclusionPath 'C:\Tools\RfoLogViewer\RfoLogViewer.exe'
 
 Replace `C:\Tools\RfoLogViewer` with the folder where you extracted the tool.
 
+### Connection timeout to DB
+
+If you get a timeout error when trying to reach any DataBase, despite it seems to work when using `sqlplus`, it may be due to an invalid LDAP configuration.
+- Search / open the file %oracle_home%\network\admin\ldap.ora
+- Try to comment on the `DIRECTORY_SERVERS` line by adding a leading `#`
+- Try again to connect to a DB with RfoLogViewer
+
 ## Building from source
 
 Requires Visual Studio 2022 (or MSBuild) and the .NET Framework 4.8 developer pack.
