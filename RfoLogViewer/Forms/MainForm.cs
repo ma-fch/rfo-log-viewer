@@ -12,7 +12,7 @@ using RfoLogViewer.Services;
 
 namespace RfoLogViewer.Forms
 {
-	public sealed class MainForm : Form
+	public partial class MainForm : Form
 	{
 		private static readonly IReadOnlyDictionary<string, string> LogStructColumnHeaders =
 			new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -62,16 +62,6 @@ namespace RfoLogViewer.Forms
 		private readonly OracleLogRepository _repository;
 		private readonly long _userId;
 		private long _contextId;
-		private readonly TreeView _tree;
-		private readonly LogDataGridView _grid;
-		private readonly ToolStrip _toolStrip;
-		private readonly ToolStripDropDownButton _logStructColumnsMenu;
-		private readonly ToolStripDropDownButton _logTableColumnsMenu;
-		private readonly ToolStripLabel _lblStatus;
-		private readonly SplitContainer _split;
-		private readonly Timer _layoutSaveTimer;
-		private readonly ToolStripMenuItem _viewQueryMenuItem;
-		private readonly ToolStripMenuItem _treeDeleteLogStructMenuItem;
 		private bool _loadingTreeNode;
 		private bool _suppressLayoutSave;
 		private bool _isLogTableView;
@@ -85,7 +75,12 @@ namespace RfoLogViewer.Forms
 		private int _findLastColumn = -1;
 		private bool _findHadMatch;
 
-		public MainForm(OracleLogRepository repository, long userId, long contextId)
+		public MainForm()
+		{
+			this.InitializeComponent();
+		}
+
+		public MainForm(OracleLogRepository repository, long userId, long contextId) : this()
 		{
 			this._repository = repository;
 			this._userId = userId;
@@ -93,159 +88,78 @@ namespace RfoLogViewer.Forms
 
 			this.InitializeTitle();
 			this.Icon = AppIcon.Get();
-			this.StartPosition = FormStartPosition.CenterScreen;
-			this.Font = new Font("Segoe UI", 9F);
 			this.LoadWindowSettings();
 			this.LoadColumnVisibilitySettings();
+			this._tree.ImageList = LogTreeImageList.Get();
+			this.PopulateColumnVisibilityMenus();
+		}
 
-			ToolStripDropDownButton dataMenu = new ToolStripDropDownButton("Data");
-			ToolStripMenuItem readExcelItem = new ToolStripMenuItem("Read Excel log file...") {
-				ShortcutKeys = Keys.Control | Keys.O,
-				ShowShortcutKeys = true
-			};
-			readExcelItem.Click += (_, __) => this.OpenExcelLogFile();
-			dataMenu.DropDownItems.Add(readExcelItem);
-
-			ToolStripMenuItem refreshItem = new ToolStripMenuItem("Refresh")
-			{
-				ShortcutKeys = Keys.F5,
-				ShowShortcutKeys = true
-			};
-			refreshItem.Click += (_, __) => this.RefreshCurrentView(preserveTree: true);
-			ToolStripMenuItem refreshSelectedItem = new ToolStripMenuItem("Refresh selected")
-			{
-				ShortcutKeys = Keys.F7,
-				ShowShortcutKeys = true
-			};
-			refreshSelectedItem.Click += (_, __) => this.RefreshSelectedView();
-			ToolStripMenuItem selectContextItem = new ToolStripMenuItem("Select Context...");
-			selectContextItem.Click += (_, __) => this.ShowSelectContextDialog();
-			ToolStripMenuItem closeWindowItem = new ToolStripMenuItem("Close window");
-			closeWindowItem.Click += (_, __) => this.Close();
-			dataMenu.DropDownItems.Add(refreshItem);
-			dataMenu.DropDownItems.Add(refreshSelectedItem);
-			dataMenu.DropDownItems.Add(selectContextItem);
-			dataMenu.DropDownItems.Add(closeWindowItem);
-
-			this._lblStatus = new ToolStripLabel { TextAlign = ContentAlignment.MiddleLeft };
-
-			ToolStripDropDownButton findMenu = new ToolStripDropDownButton("Find");
-			ToolStripMenuItem findItem = new ToolStripMenuItem("Find...")
-			{
-				ShortcutKeys = Keys.Control | Keys.F,
-				ShowShortcutKeys = true
-			};
-			findItem.Click += (_, __) => this.ShowFindDialog();
-			ToolStripMenuItem findNextItem = new ToolStripMenuItem("Find Next")
-			{
-				ShortcutKeys = Keys.F3,
-				ShowShortcutKeys = true
-			};
-			findNextItem.Click += (_, __) => this.FindNext();
-			ToolStripMenuItem findPreviousItem = new ToolStripMenuItem("Find Previous")
-			{
-				ShortcutKeys = Keys.Shift | Keys.F3,
-				ShowShortcutKeys = true
-			};
-			findPreviousItem.Click += (_, __) => this.FindPrevious();
-			findMenu.DropDownItems.Add(findItem);
-			findMenu.DropDownItems.Add(findNextItem);
-			findMenu.DropDownItems.Add(findPreviousItem);
-
-			this._logStructColumnsMenu = this.CreateColumnVisibilityMenu(
-				"Log Struct Columns",
+		private void PopulateColumnVisibilityMenus()
+		{
+			this.PopulateColumnVisibilityMenu(
+				this._logStructColumnsMenu,
 				LogStructColumnHeaders,
 				this._logStructColumnVisibility,
 				this.LogStructColumnMenuItem_Click);
-			this._logTableColumnsMenu = this.CreateColumnVisibilityMenu(
-				"Log Columns",
+			this.PopulateColumnVisibilityMenu(
+				this._logTableColumnsMenu,
 				LogTableColumnHeaders,
 				this._logTableColumnVisibility,
 				this.LogTableColumnMenuItem_Click);
+		}
 
-			this._toolStrip = new ToolStrip();
-			this._toolStrip.Items.Add(dataMenu);
-			this._toolStrip.Items.Add(findMenu);
-			this._toolStrip.Items.Add(this._logStructColumnsMenu);
-			this._toolStrip.Items.Add(this._logTableColumnsMenu);
-			//this._toolStrip.Items.Add(this._lblStatus);
-
-			this.KeyPreview = true;
-
-			this._tree = new TreeView
+		private void PopulateColumnVisibilityMenu(
+			ToolStripDropDownButton menu,
+			IReadOnlyDictionary<string, string> headers,
+			Dictionary<string, bool> visibility,
+			EventHandler clickHandler)
+		{
+			menu.DropDownItems.Clear();
+			foreach (var column in headers)
 			{
-				Dock = DockStyle.Fill,
-				HideSelection = false,
-				ImageList = LogTreeImageList.Get()
-			};
-			this._tree.BeforeExpand += this.Tree_BeforeExpand;
-			this._tree.AfterSelect += this.Tree_AfterSelect;
-			this._tree.NodeMouseClick += this.Tree_NodeMouseClick;
+				var item = new ToolStripMenuItem(column.Value)
+				{
+					Tag = column.Key,
+					CheckOnClick = true,
+					Checked = visibility[column.Key]
+				};
+				item.Click += clickHandler;
+				menu.DropDownItems.Add(item);
+			}
+		}
 
-			var treeContextMenu = new ContextMenuStrip();
-			var treeCopyMenuItem = new ToolStripMenuItem("Copy")
-			{
-				ShortcutKeys = Keys.Control | Keys.C,
-				ShowShortcutKeys = true
-			};
-			treeCopyMenuItem.Click += (_, __) => this.CopySelectedTreeNodeLabel();
-			this._treeDeleteLogStructMenuItem = new ToolStripMenuItem("Delete log struct")
-			{
-				ShortcutKeys = Keys.Delete,
-				ShowShortcutKeys = true
-			};
-			this._treeDeleteLogStructMenuItem.Click += (_, __) => this.DeleteSelectedLogStruct();
-			treeContextMenu.Opening += this.TreeContextMenu_Opening;
-			treeContextMenu.Items.Add(treeCopyMenuItem);
-			treeContextMenu.Items.Add(new ToolStripSeparator());
-			treeContextMenu.Items.Add(this._treeDeleteLogStructMenuItem);
-			this._tree.ContextMenuStrip = treeContextMenu;
+		private void ReadExcelItem_Click(object sender, EventArgs e) => this.OpenExcelLogFile();
+		private void RefreshItem_Click(object sender, EventArgs e) => this.RefreshCurrentView(preserveTree: true);
+		private void RefreshSelectedItem_Click(object sender, EventArgs e) => this.RefreshSelectedView();
+		private void SelectContextItem_Click(object sender, EventArgs e) => this.ShowSelectContextDialog();
+		private void CloseWindowItem_Click(object sender, EventArgs e) => this.Close();
+		private void FindItem_Click(object sender, EventArgs e) => this.ShowFindDialog();
+		private void FindNextItem_Click(object sender, EventArgs e) => this.FindNext();
+		private void FindPreviousItem_Click(object sender, EventArgs e) => this.FindPrevious();
+		private void TreeCopyMenuItem_Click(object sender, EventArgs e) => this.CopySelectedTreeNodeLabel();
+		private void TreeDeleteLogStructMenuItem_Click(object sender, EventArgs e) => this.DeleteSelectedLogStruct();
+		private void ViewQueryMenuItem_Click(object sender, EventArgs e) => this.ViewSelectedLogQuery();
+		private void Grid_ColumnLayoutChanged(object sender, EventArgs e) => this.ScheduleColumnLayoutSave();
+		private void Split_SplitterMoved(object sender, SplitterEventArgs e) => this.SaveWindowSettings();
+		private void LayoutSaveTimer_Tick(object sender, EventArgs e)
+		{
+			this._layoutSaveTimer.Stop();
+			this.SaveColumnLayout();
+		}
 
-			this._grid = new LogDataGridView { Dock = DockStyle.Fill };
-			this._grid.ColumnWidthChanged += (_, __) => this.ScheduleColumnLayoutSave();
-			this._grid.ColumnDisplayIndexChanged += (_, __) => this.ScheduleColumnLayoutSave();
-			this._grid.CellDoubleClick += this.Grid_CellDoubleClick;
-			this._grid.CellMouseDown += this.Grid_CellMouseDown;
-			this._grid.AllowUserToResizeRows = false;
+		private void MainForm_Load(object sender, EventArgs e)
+		{
+			this.InitializeTree();
+			this.ApplyPendingSplitterDistance();
+		}
 
-			this._viewQueryMenuItem = new ToolStripMenuItem("View query...");
-			this._viewQueryMenuItem.Click += (_, __) => this.ViewSelectedLogQuery();
-			var gridContextMenu = new ContextMenuStrip();
-			gridContextMenu.Opening += this.GridContextMenu_Opening;
-			gridContextMenu.Items.Add(this._viewQueryMenuItem);
-			this._grid.ContextMenuStrip = gridContextMenu;
-
-			this._split = new SplitContainer
-			{
-				Dock = DockStyle.Fill
-			};
-			this._split.SplitterMoved += (_, __) => this.SaveWindowSettings();
-			this._split.Panel1.Controls.Add(this._tree);
-			this._split.Panel2.Controls.Add(this._grid);
-
-			this._layoutSaveTimer = new Timer { Interval = 400 };
-			this._layoutSaveTimer.Tick += (_, __) =>
-			{
-				this._layoutSaveTimer.Stop();
-				this.SaveColumnLayout();
-			};
-
-			this.Controls.Add(this._split);
-			this.Controls.Add(this._toolStrip);
-
-			this.ResizeEnd += (_, __) => this.SaveWindowSettings();
-			this.FormClosing += (_, __) =>
-			{
-				this.SaveColumnLayout();
-				this.SaveColumnVisibilitySettings();
-				this.SaveWindowSettings();
-			};
-			this.Load += (_, __) =>
-			{
-				this.InitializeTree();
-				this.ApplyPendingSplitterDistance();
-			};
-			this.Shown += (_, __) => this.ApplyPendingSplitterDistance();
+		private void MainForm_Shown(object sender, EventArgs e) => this.ApplyPendingSplitterDistance();
+		private void MainForm_ResizeEnd(object sender, EventArgs e) => this.SaveWindowSettings();
+		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			this.SaveColumnLayout();
+			this.SaveColumnVisibilitySettings();
+			this.SaveWindowSettings();
 		}
 
 		private void InitializeTitle()
@@ -810,28 +724,6 @@ namespace RfoLogViewer.Forms
 			settings.LogStructColumnVisibility = ColumnVisibilityStore.Save(this._logStructColumnVisibility);
 			settings.LogTableColumnVisibility = ColumnVisibilityStore.Save(this._logTableColumnVisibility);
 			settings.Save();
-		}
-
-		private ToolStripDropDownButton CreateColumnVisibilityMenu(
-			string title,
-			IReadOnlyDictionary<string, string> columns,
-			IReadOnlyDictionary<string, bool> visibility,
-			EventHandler itemClickHandler)
-		{
-			var menu = new ToolStripDropDownButton(title);
-			foreach (var column in columns)
-			{
-				var item = new ToolStripMenuItem(column.Value)
-				{
-					Tag = column.Key,
-					CheckOnClick = true,
-					Checked = visibility[column.Key]
-				};
-				item.Click += itemClickHandler;
-				menu.DropDownItems.Add(item);
-			}
-
-			return menu;
 		}
 
 		private void LogStructColumnMenuItem_Click(object sender, EventArgs e)

@@ -11,7 +11,7 @@ using RfoLogViewer.Properties;
 
 namespace RfoLogViewer.Forms
 {
-    public sealed class ExcelLogViewerForm : Form
+    public partial class ExcelLogViewerForm : Form
     {
         private static readonly IReadOnlyDictionary<string, string> LogTableColumnHeaders =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -35,11 +35,6 @@ namespace RfoLogViewer.Forms
         private const string TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.fff";
 
         private readonly IList<LogEntry> _entries;
-        private readonly TreeView _tree;
-        private readonly LogDataGridView _grid;
-        private readonly ToolStripLabel _lblStatus;
-        private readonly SplitContainer _split;
-        private readonly Timer _layoutSaveTimer;
         private readonly Dictionary<string, bool> _logTableColumnVisibility;
         private bool _suppressLayoutSave;
         private bool _suppressWindowSettingsSave;
@@ -49,105 +44,23 @@ namespace RfoLogViewer.Forms
         private int _findLastColumn = -1;
         private bool _findHadMatch;
 
-        public ExcelLogViewerForm(string filePath, IList<LogEntry> entries, TreeNode rootNode)
+        public ExcelLogViewerForm()
+        {
+            this.InitializeComponent();
+        }
+
+        public ExcelLogViewerForm(string filePath, IList<LogEntry> entries, TreeNode rootNode) : this()
         {
             this._entries = entries ?? throw new ArgumentNullException(nameof(entries));
 
             this.Text = $"RFo Log Viewer - {Path.GetFileName(filePath)}";
             this.Icon = AppIcon.Get();
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.Font = new Font("Segoe UI", 9F);
             this.LoadWindowSettings();
 
             this._logTableColumnVisibility = ColumnVisibilityStore.Load(
                 Settings.Default.ExcelLogTableColumnVisibility,
                 LogTableColumnHeaders.Keys);
-
-            var findMenu = new ToolStripDropDownButton("Find");
-            var findItem = new ToolStripMenuItem("Find...")
-            {
-                ShortcutKeys = Keys.Control | Keys.F,
-                ShowShortcutKeys = true
-            };
-            findItem.Click += (_, __) => this.ShowFindDialog();
-            var findNextItem = new ToolStripMenuItem("Find Next")
-            {
-                ShortcutKeys = Keys.F3,
-                ShowShortcutKeys = true
-            };
-            findNextItem.Click += (_, __) => this.FindNext();
-            var findPreviousItem = new ToolStripMenuItem("Find Previous")
-            {
-                ShortcutKeys = Keys.Shift | Keys.F3,
-                ShowShortcutKeys = true
-            };
-            findPreviousItem.Click += (_, __) => this.FindPrevious();
-            findMenu.DropDownItems.Add(findItem);
-            findMenu.DropDownItems.Add(findNextItem);
-            findMenu.DropDownItems.Add(findPreviousItem);
-
-            var columnsMenu = this.CreateColumnVisibilityMenu();
-
-            this._lblStatus = new ToolStripLabel { TextAlign = ContentAlignment.MiddleLeft };
-
-            var toolStrip = new ToolStrip();
-            toolStrip.Items.Add(findMenu);
-            toolStrip.Items.Add(columnsMenu);
-            //toolStrip.Items.Add(this._lblStatus);
-
-            this.KeyPreview = true;
-
-            this._tree = new TreeView
-            {
-                Dock = DockStyle.Fill,
-                HideSelection = false
-            };
-            this._tree.AfterSelect += this.Tree_AfterSelect;
-            this._tree.NodeMouseClick += this.Tree_NodeMouseClick;
-
-            var treeContextMenu = new ContextMenuStrip();
-            var treeCopyMenuItem = new ToolStripMenuItem("Copy")
-            {
-                ShortcutKeys = Keys.Control | Keys.C,
-                ShowShortcutKeys = true
-            };
-            treeCopyMenuItem.Click += (_, __) => this.CopySelectedTreeNodeLabel();
-            treeContextMenu.Opening += this.TreeContextMenu_Opening;
-            treeContextMenu.Items.Add(treeCopyMenuItem);
-            this._tree.ContextMenuStrip = treeContextMenu;
-
-            this._grid = new LogDataGridView { Dock = DockStyle.Fill };
-            this._grid.ColumnWidthChanged += (_, __) => this.ScheduleColumnLayoutSave();
-            this._grid.ColumnDisplayIndexChanged += (_, __) => this.ScheduleColumnLayoutSave();
-            this._grid.AllowUserToResizeRows = false;
-
-            this._split = new SplitContainer
-            {
-                Dock = DockStyle.Fill
-            };
-            this._split.SplitterMoved += (_, __) => this.SaveWindowSettings();
-            this._split.Panel1.Controls.Add(this._tree);
-            this._split.Panel2.Controls.Add(this._grid);
-
-            this._layoutSaveTimer = new Timer { Interval = 400 };
-            this._layoutSaveTimer.Tick += (_, __) =>
-            {
-                this._layoutSaveTimer.Stop();
-                this.SaveColumnLayout();
-            };
-
-            this.Controls.Add(this._split);
-            this.Controls.Add(toolStrip);
-
-            this.ResizeEnd += (_, __) => this.SaveWindowSettings();
-            this.FormClosing += (_, __) =>
-            {
-                this.SaveColumnLayout();
-                this.SaveColumnVisibilitySettings();
-                this.SaveWindowSettings();
-            };
-            this.Load += (_, __) => this.ApplyPendingSplitterDistance();
-            this.Shown += (_, __) => this.ApplyPendingSplitterDistance();
+            this.PopulateColumnVisibilityMenu();
 
             this._tree.Nodes.Add(rootNode);
             rootNode.Expand();
@@ -155,9 +68,9 @@ namespace RfoLogViewer.Forms
             this.Text += $" - {entries.Count} log row(s)";
         }
 
-        private ToolStripDropDownButton CreateColumnVisibilityMenu()
+        private void PopulateColumnVisibilityMenu()
         {
-            var menu = new ToolStripDropDownButton("Log Columns");
+            this._logColumnsMenu.DropDownItems.Clear();
             foreach (var column in LogTableColumnHeaders)
             {
                 var item = new ToolStripMenuItem(column.Value)
@@ -166,17 +79,40 @@ namespace RfoLogViewer.Forms
                     CheckOnClick = true,
                     Checked = this._logTableColumnVisibility[column.Key]
                 };
-                item.Click += (_, __) =>
-                {
-                    var key = (string)item.Tag;
-                    this._logTableColumnVisibility[key] = item.Checked;
-                    ColumnVisibilityStore.ApplyToGrid(this._grid, this._logTableColumnVisibility);
-                    this.SaveColumnVisibilitySettings();
-                };
-                menu.DropDownItems.Add(item);
+                item.Click += this.LogColumnMenuItem_Click;
+                this._logColumnsMenu.DropDownItems.Add(item);
             }
+        }
 
-            return menu;
+        private void LogColumnMenuItem_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripMenuItem)sender;
+            var key = (string)item.Tag;
+            this._logTableColumnVisibility[key] = item.Checked;
+            ColumnVisibilityStore.ApplyToGrid(this._grid, this._logTableColumnVisibility);
+            this.SaveColumnVisibilitySettings();
+        }
+
+        private void FindItem_Click(object sender, EventArgs e) => this.ShowFindDialog();
+        private void FindNextItem_Click(object sender, EventArgs e) => this.FindNext();
+        private void FindPreviousItem_Click(object sender, EventArgs e) => this.FindPrevious();
+        private void TreeCopyMenuItem_Click(object sender, EventArgs e) => this.CopySelectedTreeNodeLabel();
+        private void Grid_ColumnLayoutChanged(object sender, EventArgs e) => this.ScheduleColumnLayoutSave();
+        private void Split_SplitterMoved(object sender, SplitterEventArgs e) => this.SaveWindowSettings();
+        private void LayoutSaveTimer_Tick(object sender, EventArgs e)
+        {
+            this._layoutSaveTimer.Stop();
+            this.SaveColumnLayout();
+        }
+
+        private void ExcelLogViewerForm_Load(object sender, EventArgs e) => this.ApplyPendingSplitterDistance();
+        private void ExcelLogViewerForm_Shown(object sender, EventArgs e) => this.ApplyPendingSplitterDistance();
+        private void ExcelLogViewerForm_ResizeEnd(object sender, EventArgs e) => this.SaveWindowSettings();
+        private void ExcelLogViewerForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this.SaveColumnLayout();
+            this.SaveColumnVisibilitySettings();
+            this.SaveWindowSettings();
         }
 
         private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)

@@ -8,21 +8,11 @@ namespace RfoLogViewer.Controls
     /// <summary>
     /// Read-only grid with Ctrl+C copy support for cell, row, or multi-row selection.
     /// </summary>
-    public sealed class LogDataGridView : DataGridView
+    public partial class LogDataGridView : DataGridView
     {
         public LogDataGridView()
         {
-            this.ReadOnly = true;
-            this.AllowUserToAddRows = false;
-            this.AllowUserToDeleteRows = false;
-            this.AllowUserToOrderColumns = true;
-            this.MultiSelect = true;
-            this.SelectionMode = DataGridViewSelectionMode.CellSelect;
-            this.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
-            this.RowHeadersVisible = false;
-            this.AllowUserToResizeColumns = true;
-            this.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
-            this.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+            this.InitializeComponent();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

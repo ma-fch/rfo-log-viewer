@@ -68,6 +68,9 @@
     <Compile Include="Controls\LogDataGridView.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\LogDataGridView.Designer.cs">
+      <DependentUpon>LogDataGridView.cs</DependentUpon>
+    </Compile>
     <Compile Include="Data\ExcelLogReader.cs" />
     <Compile Include="Data\ExcelLogTreeBuilder.cs" />
     <Compile Include="Data\LogQueries.cs" />
@@ -75,17 +78,32 @@
     <Compile Include="Forms\ConnectionForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\ConnectionForm.Designer.cs">
+      <DependentUpon>ConnectionForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ExcelLogViewerForm.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ExcelLogViewerForm.Designer.cs">
+      <DependentUpon>ExcelLogViewerForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\ContextSelectionForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\ContextSelectionForm.Designer.cs">
+      <DependentUpon>ContextSelectionForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\FindDialog.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\FindDialog.Designer.cs">
+      <DependentUpon>FindDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\ContextEntry.cs" />
     <Compile Include="Models\ExcelTreeNodeTag.cs" />
@@ -111,6 +129,24 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Controls\LogDataGridView.resx">
+      <DependentUpon>LogDataGridView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ConnectionForm.resx">
+      <DependentUpon>ConnectionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ContextSelectionForm.resx">
+      <DependentUpon>ContextSelectionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ExcelLogViewerForm.resx">
+      <DependentUpon>ExcelLogViewerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FindDialog.resx">
+      <DependentUpon>FindDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="App.config" />
     <None Include="packages.config" />
     <EmbeddedResource Include="duck.ico" />
