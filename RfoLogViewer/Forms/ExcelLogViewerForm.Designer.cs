@@ -117,6 +117,7 @@ namespace RfoLogViewer.Forms
             this._split.Size = new System.Drawing.Size(1400, 875);
             this._split.SplitterDistance = 380;
             this._split.TabIndex = 1;
+            this._split.Resize += new System.EventHandler(this.Split_Resize);
             this._split.SplitterMoved += new System.Windows.Forms.SplitterEventHandler(this.Split_SplitterMoved);
             //
             // _tree
@@ -177,7 +178,6 @@ namespace RfoLogViewer.Forms
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "RFo Log Viewer";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ExcelLogViewerForm_FormClosing);
-            this.Load += new System.EventHandler(this.ExcelLogViewerForm_Load);
             this.ResizeEnd += new System.EventHandler(this.ExcelLogViewerForm_ResizeEnd);
             this.Shown += new System.EventHandler(this.ExcelLogViewerForm_Shown);
             this._toolStrip.ResumeLayout(false);

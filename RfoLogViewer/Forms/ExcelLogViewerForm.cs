@@ -37,8 +37,10 @@ namespace RfoLogViewer.Forms
         private readonly IList<LogEntry> _entries;
         private readonly Dictionary<string, bool> _logTableColumnVisibility;
         private bool _suppressLayoutSave;
-        private bool _suppressWindowSettingsSave;
-        private int _pendingSplitterDistance = -1;
+        private bool _suppressSplitterSave;
+        private int _savedSplitterDistance;
+        private bool _splitterRestorePending = true;
+        private bool _splitterSaveEnabled;
         private string _findText;
         private int _findLastRow = -1;
         private int _findLastColumn = -1;
@@ -98,21 +100,65 @@ namespace RfoLogViewer.Forms
         private void FindPreviousItem_Click(object sender, EventArgs e) => this.FindPrevious();
         private void TreeCopyMenuItem_Click(object sender, EventArgs e) => this.CopySelectedTreeNodeLabel();
         private void Grid_ColumnLayoutChanged(object sender, EventArgs e) => this.ScheduleColumnLayoutSave();
-        private void Split_SplitterMoved(object sender, SplitterEventArgs e) => this.SaveWindowSettings();
+        private void Split_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+            if (!this._splitterSaveEnabled)
+            {
+                return;
+            }
+
+            this.SaveSplitterLayout();
+        }
+
+        private void Split_Resize(object sender, EventArgs e)
+        {
+            if (this._splitterRestorePending)
+            {
+                this.TryRestoreSplitterDistance();
+            }
+        }
+
         private void LayoutSaveTimer_Tick(object sender, EventArgs e)
         {
             this._layoutSaveTimer.Stop();
             this.SaveColumnLayout();
         }
 
-        private void ExcelLogViewerForm_Load(object sender, EventArgs e) => this.ApplyPendingSplitterDistance();
-        private void ExcelLogViewerForm_Shown(object sender, EventArgs e) => this.ApplyPendingSplitterDistance();
-        private void ExcelLogViewerForm_ResizeEnd(object sender, EventArgs e) => this.SaveWindowSettings();
+        private void ExcelLogViewerForm_Shown(object sender, EventArgs e)
+        {
+            this.TryRestoreSplitterDistance();
+            this.BeginInvoke(new Action(() =>
+            {
+                this.TryRestoreSplitterDistance();
+                this.BeginInvoke(new Action(this.FinishSplitterRestore));
+            }));
+        }
+        private void ExcelLogViewerForm_ResizeEnd(object sender, EventArgs e)
+        {
+            if (this._splitterRestorePending)
+            {
+                this.TryRestoreSplitterDistance();
+            }
+
+            this.SaveWindowSettings();
+        }
         private void ExcelLogViewerForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             this.SaveColumnLayout();
             this.SaveColumnVisibilitySettings();
+            if (this._splitterSaveEnabled)
+            {
+                this.SaveSplitterLayout();
+            }
+
             this.SaveWindowSettings();
+        }
+
+        private void FinishSplitterRestore()
+        {
+            this.TryRestoreSplitterDistance();
+            this._splitterRestorePending = false;
+            this._splitterSaveEnabled = true;
         }
 
         private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -231,54 +277,67 @@ namespace RfoLogViewer.Forms
             var settings = Settings.Default;
             this.Width = settings.ExcelLogViewerFormWidth > 0 ? settings.ExcelLogViewerFormWidth : 1400;
             this.Height = settings.ExcelLogViewerFormHeight > 0 ? settings.ExcelLogViewerFormHeight : 900;
-            this._pendingSplitterDistance = settings.ExcelLogViewerSplitterDistance > 0
+            this._savedSplitterDistance = settings.ExcelLogViewerSplitterDistance > 0
                 ? settings.ExcelLogViewerSplitterDistance
                 : 380;
         }
 
-        private void ApplyPendingSplitterDistance()
+        private void TryRestoreSplitterDistance()
         {
-            if (this._pendingSplitterDistance < 0)
+            if (!this._splitterRestorePending || this._savedSplitterDistance <= 0)
             {
                 return;
             }
 
             var split = this._split;
-            var available = split.ClientSize.Width - split.SplitterWidth;
-            if (available < split.Panel1MinSize + split.Panel2MinSize)
+            var distance = SplitContainerLayoutStore.GetClampedDistance(split, this._savedSplitterDistance);
+            if (distance < 0)
             {
                 return;
             }
 
-            var distance = this._pendingSplitterDistance;
-            this._suppressWindowSettingsSave = true;
+            this._suppressSplitterSave = true;
             try
             {
-                var max = available - split.Panel2MinSize;
-                split.SplitterDistance = Math.Max(split.Panel1MinSize, Math.Min(distance, max));
-                this._pendingSplitterDistance = -1;
+                if (split.SplitterDistance != distance)
+                {
+                    split.SplitterDistance = distance;
+                }
             }
             finally
             {
-                this._suppressWindowSettingsSave = false;
+                this._suppressSplitterSave = false;
             }
         }
 
         private void SaveWindowSettings()
         {
-            if (this._suppressWindowSettingsSave)
+            if (this.WindowState != FormWindowState.Normal)
             {
                 return;
             }
 
             var settings = Settings.Default;
-            if (this.WindowState == FormWindowState.Normal)
-            {
-                settings.ExcelLogViewerFormWidth = this.Width;
-                settings.ExcelLogViewerFormHeight = this.Height;
-            }
-            settings.ExcelLogViewerSplitterDistance = this._split.SplitterDistance;
+            settings.ExcelLogViewerFormWidth = this.Width;
+            settings.ExcelLogViewerFormHeight = this.Height;
             settings.Save();
+        }
+
+        private void SaveSplitterLayout()
+        {
+            if (!this._splitterSaveEnabled || this._suppressSplitterSave)
+            {
+                return;
+            }
+
+            Settings.Default.ExcelLogViewerSplitterDistance = this._split.SplitterDistance;
+            Settings.Default.Save();
+        }
+
+        private void ScheduleDeferredLayoutSave()
+        {
+            this._layoutSaveTimer.Stop();
+            this._layoutSaveTimer.Start();
         }
 
         private void RestoreColumnLayout(string layout)
@@ -306,8 +365,7 @@ namespace RfoLogViewer.Forms
                 return;
             }
 
-            this._layoutSaveTimer.Stop();
-            this._layoutSaveTimer.Start();
+            this.ScheduleDeferredLayoutSave();
         }
 
         private void SaveColumnLayout()

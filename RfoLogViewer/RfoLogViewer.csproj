@@ -118,6 +118,7 @@
     <Compile Include="Properties\ColumnVisibilityStore.cs" />
     <Compile Include="Properties\DataGridViewLayoutStore.cs" />
     <Compile Include="Properties\LogTreeImageList.cs" />
+    <Compile Include="Properties\SplitContainerLayoutStore.cs" />
     <Compile Include="Properties\Settings.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <DependentUpon>Settings.cs</DependentUpon>

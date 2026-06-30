@@ -66,8 +66,10 @@ namespace RfoLogViewer.Forms
 		private bool _suppressLayoutSave;
 		private bool _isLogTableView;
 		private string _currentColumnLayoutKey;
-		private int _pendingSplitterDistance = -1;
-		private bool _suppressWindowSettingsSave;
+		private bool _suppressSplitterSave;
+		private int _savedSplitterDistance;
+		private bool _splitterRestorePending = true;
+		private bool _splitterSaveEnabled;
 		private Dictionary<string, bool> _logStructColumnVisibility;
 		private Dictionary<string, bool> _logTableColumnVisibility;
 		private string _findText;
@@ -140,26 +142,67 @@ namespace RfoLogViewer.Forms
 		private void TreeDeleteLogStructMenuItem_Click(object sender, EventArgs e) => this.DeleteSelectedLogStruct();
 		private void ViewQueryMenuItem_Click(object sender, EventArgs e) => this.ViewSelectedLogQuery();
 		private void Grid_ColumnLayoutChanged(object sender, EventArgs e) => this.ScheduleColumnLayoutSave();
-		private void Split_SplitterMoved(object sender, SplitterEventArgs e) => this.SaveWindowSettings();
+		private void Split_SplitterMoved(object sender, SplitterEventArgs e)
+		{
+			if (!this._splitterSaveEnabled)
+			{
+				return;
+			}
+
+			this.SaveSplitterLayout();
+		}
+
+		private void Split_Resize(object sender, EventArgs e)
+		{
+			if (this._splitterRestorePending)
+			{
+				this.TryRestoreSplitterDistance();
+			}
+		}
+
 		private void LayoutSaveTimer_Tick(object sender, EventArgs e)
 		{
 			this._layoutSaveTimer.Stop();
 			this.SaveColumnLayout();
 		}
 
-		private void MainForm_Load(object sender, EventArgs e)
-		{
-			this.InitializeTree();
-			this.ApplyPendingSplitterDistance();
-		}
+		private void MainForm_Load(object sender, EventArgs e) => this.InitializeTree();
 
-		private void MainForm_Shown(object sender, EventArgs e) => this.ApplyPendingSplitterDistance();
-		private void MainForm_ResizeEnd(object sender, EventArgs e) => this.SaveWindowSettings();
+		private void MainForm_Shown(object sender, EventArgs e)
+		{
+			this.TryRestoreSplitterDistance();
+			this.BeginInvoke(new Action(() =>
+			{
+				this.TryRestoreSplitterDistance();
+				this.BeginInvoke(new Action(this.FinishSplitterRestore));
+			}));
+		}
+		private void MainForm_ResizeEnd(object sender, EventArgs e)
+		{
+			if (this._splitterRestorePending)
+			{
+				this.TryRestoreSplitterDistance();
+			}
+
+			this.SaveWindowSettings();
+		}
 		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			this.SaveColumnLayout();
 			this.SaveColumnVisibilitySettings();
+			if (this._splitterSaveEnabled)
+			{
+				this.SaveSplitterLayout();
+			}
+
 			this.SaveWindowSettings();
+		}
+
+		private void FinishSplitterRestore()
+		{
+			this.TryRestoreSplitterDistance();
+			this._splitterRestorePending = false;
+			this._splitterSaveEnabled = true;
 		}
 
 		private void InitializeTitle()
@@ -755,52 +798,65 @@ namespace RfoLogViewer.Forms
 			var settings = Settings.Default;
 			this.Width = settings.MainFormWidth > 0 ? settings.MainFormWidth : 1400;
 			this.Height = settings.MainFormHeight > 0 ? settings.MainFormHeight : 900;
-			this._pendingSplitterDistance = settings.SplitterDistance > 0 ? settings.SplitterDistance : 380;
+			this._savedSplitterDistance = settings.SplitterDistance > 0 ? settings.SplitterDistance : 380;
 		}
 
-		private void ApplyPendingSplitterDistance()
+		private void TryRestoreSplitterDistance()
 		{
-			if (this._pendingSplitterDistance < 0)
+			if (!this._splitterRestorePending || this._savedSplitterDistance <= 0)
 			{
 				return;
 			}
 
 			var split = this._split;
-			var available = split.ClientSize.Width - split.SplitterWidth;
-			if (available < split.Panel1MinSize + split.Panel2MinSize)
+			var distance = SplitContainerLayoutStore.GetClampedDistance(split, this._savedSplitterDistance);
+			if (distance < 0)
 			{
 				return;
 			}
 
-			var distance = this._pendingSplitterDistance;
-			this._suppressWindowSettingsSave = true;
+			this._suppressSplitterSave = true;
 			try
 			{
-				var max = available - split.Panel2MinSize;
-				split.SplitterDistance = Math.Max(split.Panel1MinSize, Math.Min(distance, max));
-				this._pendingSplitterDistance = -1;
+				if (split.SplitterDistance != distance)
+				{
+					split.SplitterDistance = distance;
+				}
 			}
 			finally
 			{
-				this._suppressWindowSettingsSave = false;
+				this._suppressSplitterSave = false;
 			}
 		}
 
 		private void SaveWindowSettings()
 		{
-			if (this._suppressWindowSettingsSave)
+			if (this.WindowState != FormWindowState.Normal)
 			{
 				return;
 			}
 
 			var settings = Settings.Default;
-			if (this.WindowState == FormWindowState.Normal)
-			{
-				settings.MainFormWidth = this.Width;
-				settings.MainFormHeight = this.Height;
-			}
-			settings.SplitterDistance = this._split.SplitterDistance;
+			settings.MainFormWidth = this.Width;
+			settings.MainFormHeight = this.Height;
 			settings.Save();
+		}
+
+		private void SaveSplitterLayout()
+		{
+			if (!this._splitterSaveEnabled || this._suppressSplitterSave)
+			{
+				return;
+			}
+
+			Settings.Default.SplitterDistance = this._split.SplitterDistance;
+			Settings.Default.Save();
+		}
+
+		private void ScheduleDeferredLayoutSave()
+		{
+			this._layoutSaveTimer.Stop();
+			this._layoutSaveTimer.Start();
 		}
 
 		private void RestoreColumnLayout(string layout)
@@ -828,8 +884,7 @@ namespace RfoLogViewer.Forms
 				return;
 			}
 
-			this._layoutSaveTimer.Stop();
-			this._layoutSaveTimer.Start();
+			this.ScheduleDeferredLayoutSave();
 		}
 
 		private void SaveColumnLayout()
