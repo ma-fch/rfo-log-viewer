@@ -71,6 +71,7 @@
     <Compile Include="Controls\LogDataGridView.Designer.cs">
       <DependentUpon>LogDataGridView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Data\ExcelLogFilePaths.cs" />
     <Compile Include="Data\ExcelLogReader.cs" />
     <Compile Include="Data\ExcelLogTreeBuilder.cs" />
     <Compile Include="Data\LogQueries.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="Models\LogTreeItemType.cs" />
     <Compile Include="Models\LogTreePictureIndex.cs" />
     <Compile Include="Models\TreeNodeTag.cs" />
+    <Compile Include="Services\ExcelLogFileOpener.cs" />
     <Compile Include="Services\LogQueryViewer.cs" />
     <Compile Include="Properties\ColumnVisibilityStore.cs" />
     <Compile Include="Properties\DataGridViewLayoutStore.cs" />

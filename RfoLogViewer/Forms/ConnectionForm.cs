@@ -1,5 +1,6 @@
 using RfoLogViewer.Data;
 using RfoLogViewer.Properties;
+using RfoLogViewer.Services;
 using System;
 using System.Windows.Forms;
 
@@ -16,8 +17,12 @@ namespace RfoLogViewer.Forms
         public ConnectionForm()
         {
             this.InitializeComponent();
-            this.Icon = AppIcon.Get();
-            this.LoadSavedSettings();
+            if (!this.DesignMode)
+            {
+                this.Icon = AppIcon.Get();
+                this.LoadSavedSettings();
+                this.EnableExcelFileDragDrop(this);
+            }
         }
 
         public static void SaveSettings(string login, string password, string dataSource, long contextId, bool savePassword)
@@ -63,29 +68,54 @@ namespace RfoLogViewer.Forms
                     return;
                 }
 
-                try
-                {
-                    this.Cursor = Cursors.WaitCursor;
-                    var entries = ExcelLogReader.Load(dialog.FileName);
-                    if (entries.Count == 0)
-                    {
-                        MessageBox.Show(this, "No log rows found in the selected file.", "Read Excel log file",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return;
-                    }
+                ExcelLogFileOpener.OpenViewer(this, dialog.FileName);
+            }
+        }
 
-                    var rootNode = ExcelLogTreeBuilder.Build(entries);
-                    var viewer = new ExcelLogViewerForm(dialog.FileName, entries, rootNode);
-                    viewer.Show();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(this, ex.Message, "Read Excel log file", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    this.Cursor = Cursors.Default;
-                }
+        private void ConnectionForm_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = ExcelLogFilePaths.CanAcceptExcelDrag(e.Data)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+        }
+
+        private bool _excelDropInProgress;
+
+        private void ConnectionForm_DragDrop(object sender, DragEventArgs e)
+        {
+            if (this._excelDropInProgress)
+            {
+                return;
+            }
+
+            if (!ExcelLogFilePaths.TryGetExcelFileFromDrag(e.Data, out var filePath))
+            {
+                MessageBox.Show(this,
+                    "Could not resolve the dropped Excel file path. Drop the file from Windows Explorer, or use Open Excel File...",
+                    "Read Excel log file", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            this._excelDropInProgress = true;
+            try
+            {
+                ExcelLogFileOpener.OpenViewer(this, filePath);
+            }
+            finally
+            {
+                this.BeginInvoke(new Action(() => this._excelDropInProgress = false));
+            }
+        }
+
+        private void EnableExcelFileDragDrop(Control control)
+        {
+            control.AllowDrop = true;
+            control.DragEnter += this.ConnectionForm_DragEnter;
+            control.DragDrop += this.ConnectionForm_DragDrop;
+
+            foreach (Control child in control.Controls)
+            {
+                this.EnableExcelFileDragDrop(child);
             }
         }
 

@@ -66,6 +66,7 @@ namespace RfoLogViewer.Forms
 
             this._tree.Nodes.Add(rootNode);
             rootNode.Expand();
+            this.SelectFirstLogSessionNode();
             this._lblStatus.Text = $"{entries.Count} log row(s) loaded. Select a tree node to display logs.";
             this.Text += $" - {entries.Count} log row(s)";
         }
@@ -187,6 +188,34 @@ namespace RfoLogViewer.Forms
             {
                 Clipboard.SetText(selectedNode.Text);
             }
+        }
+
+        private void SelectFirstLogSessionNode()
+        {
+            var node = this.FindFirstLogSessionNode(this._tree.Nodes);
+            if (node != null)
+            {
+                this._tree.SelectedNode = node;
+            }
+        }
+
+        private TreeNode FindFirstLogSessionNode(TreeNodeCollection nodes)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                if (node.Tag is ExcelTreeNodeTag tag && tag.ItemType == ExcelTreeItemType.LogSession)
+                {
+                    return node;
+                }
+
+                var child = this.FindFirstLogSessionNode(node.Nodes);
+                if (child != null)
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         private void Tree_AfterSelect(object sender, TreeViewEventArgs e)

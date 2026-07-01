@@ -224,29 +224,7 @@ namespace RfoLogViewer.Forms
 					return;
 				}
 
-				try
-				{
-					this.Cursor = Cursors.WaitCursor;
-					var entries = ExcelLogReader.Load(dialog.FileName);
-					if (entries.Count == 0)
-					{
-						MessageBox.Show(this, "No log rows found in the selected file.", "Read Excel log file",
-							MessageBoxButtons.OK, MessageBoxIcon.Information);
-						return;
-					}
-
-					var rootNode = ExcelLogTreeBuilder.Build(entries);
-					var viewer = new ExcelLogViewerForm(dialog.FileName, entries, rootNode);
-					viewer.Show();
-				}
-				catch (Exception ex)
-				{
-					MessageBox.Show(this, ex.Message, "Read Excel log file", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
-				finally
-				{
-					this.Cursor = Cursors.Default;
-				}
+				ExcelLogFileOpener.OpenViewer(this, dialog.FileName);
 			}
 		}
 

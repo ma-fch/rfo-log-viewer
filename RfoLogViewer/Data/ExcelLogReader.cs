@@ -26,28 +26,87 @@ namespace RfoLogViewer.Data
                 throw new ArgumentException("File path is required.", nameof(filePath));
             }
 
-            if (!File.Exists(filePath))
+            var resolvedPath = ExcelLogFilePaths.ResolveForOpen(filePath) ?? filePath;
+            if (!File.Exists(resolvedPath))
             {
-                throw new FileNotFoundException("Excel log file was not found.", filePath);
+                throw new FileNotFoundException("Excel log file was not found.", resolvedPath);
             }
 
-            using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var stream = File.Open(resolvedPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var reader = ExcelReaderFactory.CreateReader(stream))
+            {
+                do
+                {
+                    if (TryReadWorksheet(reader, out var entries))
+                    {
+                        return entries;
+                    }
+                }
+                while (reader.NextResult());
+            }
+
+            return Array.Empty<LogEntry>();
+        }
+
+        public static bool LooksLikeRfoLogExport(IList<LogEntry> entries)
+        {
+            if (entries == null || entries.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var entry in entries)
+            {
+                if (entry.LogId != 0
+                    || !string.IsNullOrWhiteSpace(entry.RootLogKey)
+                    || !string.IsNullOrWhiteSpace(entry.Function)
+                    || !string.IsNullOrWhiteSpace(entry.Message))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryReadWorksheet(IExcelDataReader reader, out IList<LogEntry> entries)
+        {
+            entries = Array.Empty<LogEntry>();
+            Dictionary<string, int> columnIndex = null;
+
+            for (var scan = 0; scan < 20; scan++)
             {
                 if (!reader.Read())
                 {
-                    return Array.Empty<LogEntry>();
+                    return false;
                 }
 
-                var columnIndex = BuildColumnIndex(reader);
-                var entries = new List<LogEntry>();
-                while (reader.Read())
+                var candidate = BuildColumnIndex(reader);
+                if (candidate.ContainsKey("LOG_ID"))
                 {
-                    entries.Add(MapRow(reader, columnIndex));
+                    columnIndex = candidate;
+                    break;
                 }
-
-                return entries;
             }
+
+            if (columnIndex == null)
+            {
+                return false;
+            }
+
+            var list = new List<LogEntry>();
+            while (reader.Read())
+            {
+                list.Add(MapRow(reader, columnIndex));
+            }
+
+            if (list.Count == 0)
+            {
+                return false;
+            }
+
+            entries = list;
+            return true;
         }
 
         private static Dictionary<string, int> BuildColumnIndex(IExcelDataReader reader)
@@ -55,7 +114,7 @@ namespace RfoLogViewer.Data
             var columnIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                var name = Convert.ToString(reader.GetValue(i))?.Trim();
+                var name = NormalizeColumnName(Convert.ToString(reader.GetValue(i)));
                 if (!string.IsNullOrEmpty(name) && !columnIndex.ContainsKey(name))
                 {
                     columnIndex[name] = i;
@@ -63,6 +122,35 @@ namespace RfoLogViewer.Data
             }
 
             return columnIndex;
+        }
+
+        private static string NormalizeColumnName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return string.Empty;
+            }
+
+            var builder = new System.Text.StringBuilder(name.Length);
+            var previousWasSeparator = false;
+            foreach (var ch in name.Trim())
+            {
+                if (char.IsWhiteSpace(ch) || ch == '-' || ch == '.')
+                {
+                    if (!previousWasSeparator && builder.Length > 0)
+                    {
+                        builder.Append('_');
+                        previousWasSeparator = true;
+                    }
+
+                    continue;
+                }
+
+                builder.Append(char.ToUpperInvariant(ch));
+                previousWasSeparator = false;
+            }
+
+            return builder.ToString().Trim('_');
         }
 
         private static LogEntry MapRow(IExcelDataReader reader, IReadOnlyDictionary<string, int> columnIndex)
