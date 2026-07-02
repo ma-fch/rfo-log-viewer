@@ -61,6 +61,7 @@ namespace RfoLogViewer.Forms
 
 		private readonly OracleLogRepository _repository;
 		private readonly long _userId;
+		private readonly bool _saveConnectionAsDefault;
 		private long _contextId;
 		private bool _loadingTreeNode;
 		private bool _suppressLayoutSave;
@@ -82,11 +83,12 @@ namespace RfoLogViewer.Forms
 			this.InitializeComponent();
 		}
 
-		public MainForm(OracleLogRepository repository, long userId, long contextId) : this()
+		public MainForm(OracleLogRepository repository, long userId, long contextId, bool saveConnectionAsDefault) : this()
 		{
 			this._repository = repository;
 			this._userId = userId;
 			this._contextId = contextId;
+			this._saveConnectionAsDefault = saveConnectionAsDefault;
 
 			this.InitializeTitle();
 			this.Icon = AppIcon.Get();
@@ -284,12 +286,16 @@ namespace RfoLogViewer.Forms
 					this.Cursor = Cursors.WaitCursor;
 					this._repository.OpenContext(newContextId, this._userId);
 					this._contextId = newContextId;
-					ConnectionForm.SaveSettings(
-						Settings.Default.LastLogin,
-						Settings.Default.SavePassword ? Settings.Default.LastPassword : string.Empty,
-						Settings.Default.LastDataSource,
-						this._contextId,
-						Settings.Default.SavePassword);
+					if (this._saveConnectionAsDefault)
+					{
+						ConnectionForm.SaveSettings(
+							Settings.Default.LastLogin,
+							Settings.Default.SavePassword ? Settings.Default.LastPassword : string.Empty,
+							Settings.Default.LastDataSource,
+							this._contextId,
+							Settings.Default.SavePassword);
+					}
+
 					this.ReloadAfterContextChange();
 				}
 			}

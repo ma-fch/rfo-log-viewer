@@ -13,6 +13,7 @@ namespace RfoLogViewer.Forms
         public string DataSource => this._txtDataSource.Text.Trim();
         public long ContextId => long.TryParse(this._txtContextId.Text.Trim(), out var id) ? id : 0;
         public bool SavePasswordEnabled => this._chkSavePassword.Checked;
+        public bool SaveAsDefaultConnectionEnabled => this._chkSaveAsDefaultConnection.Checked;
 
         public ConnectionForm()
         {

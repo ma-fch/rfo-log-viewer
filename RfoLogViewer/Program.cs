@@ -22,12 +22,15 @@ namespace RfoLogViewer
                     return;
                 }
 
-                ConnectionForm.SaveSettings(
-                    connectionForm.Login,
-                    connectionForm.Password,
-                    connectionForm.DataSource,
-                    connectionForm.ContextId,
-                    connectionForm.SavePasswordEnabled);
+                if (connectionForm.SaveAsDefaultConnectionEnabled)
+                {
+                    ConnectionForm.SaveSettings(
+                        connectionForm.Login,
+                        connectionForm.Password,
+                        connectionForm.DataSource,
+                        connectionForm.ContextId,
+                        connectionForm.SavePasswordEnabled);
+                }
 
                 OracleLogRepository repository = null;
                 try
@@ -40,7 +43,11 @@ namespace RfoLogViewer
                     var userId = repository.GetUserId(connectionForm.Login);
                     repository.OpenContext(connectionForm.ContextId, userId);
 
-                    Application.Run(new MainForm(repository, userId, connectionForm.ContextId));
+                    Application.Run(new MainForm(
+                        repository,
+                        userId,
+                        connectionForm.ContextId,
+                        connectionForm.SaveAsDefaultConnectionEnabled));
                 }
                 catch (Exception ex)
                 {

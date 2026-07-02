@@ -26,7 +26,9 @@ namespace RfoLogViewer.Forms
             this._txtDataSource = new System.Windows.Forms.TextBox();
             this.lblContextId = new System.Windows.Forms.Label();
             this._txtContextId = new System.Windows.Forms.TextBox();
+            this.optionsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this._chkSavePassword = new System.Windows.Forms.CheckBox();
+            this._chkSaveAsDefaultConnection = new System.Windows.Forms.CheckBox();
             this.hint = new System.Windows.Forms.Label();
             this.footer = new System.Windows.Forms.TableLayoutPanel();
             this.footerSpacer = new System.Windows.Forms.Panel();
@@ -36,6 +38,7 @@ namespace RfoLogViewer.Forms
             this._btnOk = new System.Windows.Forms.Button();
             this._btnCancel = new System.Windows.Forms.Button();
             this.layout.SuspendLayout();
+            this.optionsPanel.SuspendLayout();
             this.footer.SuspendLayout();
             this.excelPanel.SuspendLayout();
             this.okCancelPanel.SuspendLayout();
@@ -54,7 +57,7 @@ namespace RfoLogViewer.Forms
             this.layout.Controls.Add(this._txtDataSource, 1, 2);
             this.layout.Controls.Add(this.lblContextId, 0, 3);
             this.layout.Controls.Add(this._txtContextId, 1, 3);
-            this.layout.Controls.Add(this._chkSavePassword, 1, 4);
+            this.layout.Controls.Add(this.optionsPanel, 1, 4);
             this.layout.Controls.Add(this.hint, 0, 5);
             this.layout.Controls.Add(this.footer, 0, 6);
             this.layout.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -148,16 +151,43 @@ namespace RfoLogViewer.Forms
             this._txtContextId.Size = new System.Drawing.Size(340, 23);
             this._txtContextId.TabIndex = 7;
             //
+            // optionsPanel
+            //
+            this.optionsPanel.AutoSize = true;
+            this.optionsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.optionsPanel.Controls.Add(this._chkSavePassword);
+            this.optionsPanel.Controls.Add(this._chkSaveAsDefaultConnection);
+            this.optionsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.optionsPanel.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
+            this.optionsPanel.Location = new System.Drawing.Point(165, 151);
+            this.optionsPanel.Name = "optionsPanel";
+            this.optionsPanel.Size = new System.Drawing.Size(340, 28);
+            this.optionsPanel.TabIndex = 8;
+            this.optionsPanel.WrapContents = false;
+            //
             // _chkSavePassword
             //
             this._chkSavePassword.AutoSize = true;
-            this._chkSavePassword.Dock = System.Windows.Forms.DockStyle.Left;
-            this._chkSavePassword.Location = new System.Drawing.Point(165, 151);
+            this._chkSavePassword.Location = new System.Drawing.Point(0, 3);
+            this._chkSavePassword.Margin = new System.Windows.Forms.Padding(0, 3, 16, 0);
             this._chkSavePassword.Name = "_chkSavePassword";
-            this._chkSavePassword.Size = new System.Drawing.Size(104, 28);
-            this._chkSavePassword.TabIndex = 8;
+            this._chkSavePassword.Size = new System.Drawing.Size(104, 19);
+            this._chkSavePassword.TabIndex = 0;
             this._chkSavePassword.Text = "Save password";
             this._chkSavePassword.UseVisualStyleBackColor = true;
+            //
+            // _chkSaveAsDefaultConnection
+            //
+            this._chkSaveAsDefaultConnection.AutoSize = true;
+            this._chkSaveAsDefaultConnection.Checked = true;
+            this._chkSaveAsDefaultConnection.CheckState = System.Windows.Forms.CheckState.Checked;
+            this._chkSaveAsDefaultConnection.Location = new System.Drawing.Point(120, 3);
+            this._chkSaveAsDefaultConnection.Margin = new System.Windows.Forms.Padding(0, 3, 0, 0);
+            this._chkSaveAsDefaultConnection.Name = "_chkSaveAsDefaultConnection";
+            this._chkSaveAsDefaultConnection.Size = new System.Drawing.Size(158, 19);
+            this._chkSaveAsDefaultConnection.TabIndex = 1;
+            this._chkSaveAsDefaultConnection.Text = "Save as default connection";
+            this._chkSaveAsDefaultConnection.UseVisualStyleBackColor = true;
             //
             // hint
             //
@@ -272,6 +302,8 @@ namespace RfoLogViewer.Forms
             this.Text = "RFo Log Viewer - Connection";
             this.layout.ResumeLayout(false);
             this.layout.PerformLayout();
+            this.optionsPanel.ResumeLayout(false);
+            this.optionsPanel.PerformLayout();
             this.footer.ResumeLayout(false);
             this.footer.PerformLayout();
             this.excelPanel.ResumeLayout(false);
@@ -290,7 +322,9 @@ namespace RfoLogViewer.Forms
         private System.Windows.Forms.TextBox _txtDataSource;
         private System.Windows.Forms.Label lblContextId;
         private System.Windows.Forms.TextBox _txtContextId;
+        private System.Windows.Forms.FlowLayoutPanel optionsPanel;
         private System.Windows.Forms.CheckBox _chkSavePassword;
+        private System.Windows.Forms.CheckBox _chkSaveAsDefaultConnection;
         private System.Windows.Forms.Label hint;
         private System.Windows.Forms.TableLayoutPanel footer;
         private System.Windows.Forms.Panel footerSpacer;
