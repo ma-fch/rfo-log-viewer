@@ -241,8 +241,7 @@ namespace RfoLogViewer.Forms
                         .Where(entry => entry.LogStructId.HasValue && tag.FilterLogStructIds.Contains(entry.LogStructId.Value))
                         .Where(entry => !string.Equals(entry.Function, "LOG_BEGIN", StringComparison.OrdinalIgnoreCase))
                         .Where(entry => !string.Equals(entry.Function, "LOG_END", StringComparison.OrdinalIgnoreCase))
-                        .OrderBy(entry => entry.DateTime ?? DateTime.MinValue)
-                        .ThenBy(entry => entry.LogId)
+                        .OrderBy(entry => entry.LogId)
                         .ToList();
                     break;
                 default:
