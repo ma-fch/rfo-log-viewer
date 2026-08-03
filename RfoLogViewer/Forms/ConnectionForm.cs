@@ -2,6 +2,7 @@ using RfoLogViewer.Data;
 using RfoLogViewer.Properties;
 using RfoLogViewer.Services;
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace RfoLogViewer.Forms
@@ -14,6 +15,10 @@ namespace RfoLogViewer.Forms
         public long ContextId => long.TryParse(this._txtContextId.Text.Trim(), out var id) ? id : 0;
         public bool SavePasswordEnabled => this._chkSavePassword.Checked;
         public bool SaveAsDefaultConnectionEnabled => this._chkSaveAsDefaultConnection.Checked;
+
+        private readonly Dictionary<string, ConnectionProfile> _savedConnectionProfiles = new Dictionary<string, ConnectionProfile>(StringComparer.OrdinalIgnoreCase);
+
+        private bool _loadingConnectionProfiles;
 
         public ConnectionForm()
         {
@@ -29,6 +34,14 @@ namespace RfoLogViewer.Forms
         public static void SaveSettings(string login, string password, string dataSource, long contextId, bool savePassword)
         {
             var settings = Settings.Default;
+            var profile = ConnectionProfileStore.CreateProfile(
+                dataSource,
+                login,
+                password,
+                contextId,
+                savePassword);
+            var profiles = ConnectionProfileStore.Load(settings.ConnectionProfiles);
+            settings.ConnectionProfiles = ConnectionProfileStore.Save(ConnectionProfileStore.Upsert(profiles, profile));
             settings.LastLogin = login ?? string.Empty;
             settings.LastDataSource = dataSource ?? string.Empty;
             settings.LastContextId = contextId > 0 ? contextId.ToString() : string.Empty;
@@ -40,13 +53,112 @@ namespace RfoLogViewer.Forms
         private void LoadSavedSettings()
         {
             var settings = Settings.Default;
-            this._txtLogin.Text = settings.LastLogin ?? string.Empty;
-            this._txtDataSource.Text = settings.LastDataSource ?? string.Empty;
-            this._txtContextId.Text = settings.LastContextId ?? string.Empty;
-            this._chkSavePassword.Checked = settings.SavePassword;
-            if (settings.SavePassword)
+            var profiles = ConnectionProfileStore.Load(settings.ConnectionProfiles);
+            ConnectionProfile currentProfile = null;
+            if (!string.IsNullOrWhiteSpace(settings.LastDataSource))
             {
-                this._txtPassword.Text = settings.LastPassword ?? string.Empty;
+                currentProfile = ConnectionProfileStore.CreateProfile(
+                    settings.LastDataSource,
+                    settings.LastLogin,
+                    settings.SavePassword ? settings.LastPassword : string.Empty,
+                    this.ParseContextId(settings.LastContextId),
+                    settings.SavePassword);
+            }
+            var orderedProfiles = ConnectionProfileStore.Upsert(profiles, currentProfile);
+
+            this._loadingConnectionProfiles = true;
+            try
+            {
+                this._savedConnectionProfiles.Clear();
+                this._txtDataSource.BeginUpdate();
+                this._txtDataSource.Items.Clear();
+
+                foreach (var profile in orderedProfiles)
+                {
+                    if ((profile == null) || string.IsNullOrWhiteSpace(profile.DataSource) || this._savedConnectionProfiles.ContainsKey(profile.DataSource))
+                    {
+                        continue;
+                    }
+
+                    this._savedConnectionProfiles.Add(profile.DataSource, profile);
+                    this._txtDataSource.Items.Add(profile.DataSource);
+                }
+
+                ConnectionProfile selectedProfile = null;
+                if ((currentProfile != null) && !string.IsNullOrWhiteSpace(currentProfile.DataSource))
+                {
+                    this._savedConnectionProfiles.TryGetValue(currentProfile.DataSource, out selectedProfile);
+                }
+
+                if (selectedProfile == null)
+                {
+                    foreach (var profile in orderedProfiles)
+                    {
+                        selectedProfile = profile;
+                        break;
+                    }
+                }
+
+                if (selectedProfile != null)
+                {
+                    this._txtDataSource.SelectedItem = selectedProfile.DataSource;
+                    this.ApplyConnectionProfile(selectedProfile);
+                }
+                else
+                {
+                    this._txtLogin.Text = settings.LastLogin ?? string.Empty;
+                    this._txtDataSource.Text = settings.LastDataSource ?? string.Empty;
+                    this._txtContextId.Text = settings.LastContextId ?? string.Empty;
+                    this._chkSavePassword.Checked = settings.SavePassword;
+                    this._txtPassword.Text = settings.SavePassword ? settings.LastPassword ?? string.Empty : string.Empty;
+                }
+            }
+            finally
+            {
+                this._txtDataSource.EndUpdate();
+                this._loadingConnectionProfiles = false;
+            }
+        }
+
+        private void ApplyConnectionProfile(ConnectionProfile profile)
+        {
+            if (profile == null)
+            {
+                return;
+            }
+
+            this._txtLogin.Text = profile.Login ?? string.Empty;
+            this._txtPassword.Text = profile.SavePassword ? profile.Password ?? string.Empty : string.Empty;
+            this._txtContextId.Text = profile.ContextId > 0 ? profile.ContextId.ToString() : string.Empty;
+            this._chkSavePassword.Checked = profile.SavePassword;
+        }
+
+        private long ParseContextId(string value)
+        {
+            return long.TryParse((value ?? string.Empty).Trim(), out var contextId) ? contextId : 0;
+        }
+
+        private void TxtDataSource_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (this._loadingConnectionProfiles)
+            {
+                return;
+            }
+
+            var dataSource = this._txtDataSource.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(dataSource))
+            {
+                dataSource = this._txtDataSource.Text.Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(dataSource))
+            {
+                return;
+            }
+
+            if (this._savedConnectionProfiles.TryGetValue(dataSource, out var profile))
+            {
+                this.ApplyConnectionProfile(profile);
             }
         }
 

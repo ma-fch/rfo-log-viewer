@@ -37,6 +37,14 @@ namespace RfoLogViewer.Properties
         }
 
         [UserScopedSetting]
+        [DefaultSettingValue("")]
+        public string ConnectionProfiles
+        {
+            get => (string)this[nameof(ConnectionProfiles)];
+            set => this[nameof(ConnectionProfiles)] = value;
+        }
+
+        [UserScopedSetting]
         [DefaultSettingValue("False")]
         public bool SavePassword
         {

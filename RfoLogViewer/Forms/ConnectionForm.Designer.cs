@@ -23,7 +23,7 @@ namespace RfoLogViewer.Forms
             this.lblPassword = new System.Windows.Forms.Label();
             this._txtPassword = new System.Windows.Forms.TextBox();
             this.lblDataSource = new System.Windows.Forms.Label();
-            this._txtDataSource = new System.Windows.Forms.TextBox();
+            this._txtDataSource = new System.Windows.Forms.ComboBox();
             this.lblContextId = new System.Windows.Forms.Label();
             this._txtContextId = new System.Windows.Forms.TextBox();
             this.optionsPanel = new System.Windows.Forms.FlowLayoutPanel();
@@ -130,8 +130,13 @@ namespace RfoLogViewer.Forms
             this._txtDataSource.Dock = System.Windows.Forms.DockStyle.Fill;
             this._txtDataSource.Location = new System.Drawing.Point(165, 83);
             this._txtDataSource.Name = "_txtDataSource";
+            this._txtDataSource.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._txtDataSource.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this._txtDataSource.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
+            this._txtDataSource.FormattingEnabled = true;
             this._txtDataSource.Size = new System.Drawing.Size(340, 23);
             this._txtDataSource.TabIndex = 5;
+            this._txtDataSource.SelectionChangeCommitted += new System.EventHandler(this.TxtDataSource_SelectionChangeCommitted);
             //
             // lblContextId
             //
@@ -319,7 +324,7 @@ namespace RfoLogViewer.Forms
         private System.Windows.Forms.Label lblPassword;
         private System.Windows.Forms.TextBox _txtPassword;
         private System.Windows.Forms.Label lblDataSource;
-        private System.Windows.Forms.TextBox _txtDataSource;
+        private System.Windows.Forms.ComboBox _txtDataSource;
         private System.Windows.Forms.Label lblContextId;
         private System.Windows.Forms.TextBox _txtContextId;
         private System.Windows.Forms.FlowLayoutPanel optionsPanel;

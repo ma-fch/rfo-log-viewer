@@ -118,6 +118,7 @@
     <Compile Include="Services\ExcelLogFileOpener.cs" />
     <Compile Include="Services\LogQueryViewer.cs" />
     <Compile Include="Properties\ColumnVisibilityStore.cs" />
+    <Compile Include="Properties\ConnectionProfileStore.cs" />
     <Compile Include="Properties\DataGridViewLayoutStore.cs" />
     <Compile Include="Properties\LogTreeImageList.cs" />
     <Compile Include="Properties\SplitContainerLayoutStore.cs" />
