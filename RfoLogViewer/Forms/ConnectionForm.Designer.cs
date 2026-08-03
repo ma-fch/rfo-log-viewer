@@ -26,6 +26,8 @@ namespace RfoLogViewer.Forms
             this._txtDataSource = new System.Windows.Forms.ComboBox();
             this.lblContextId = new System.Windows.Forms.Label();
             this._txtContextId = new System.Windows.Forms.TextBox();
+            this.lblUserConfigPath = new System.Windows.Forms.Label();
+            this._txtUserConfigPath = new System.Windows.Forms.TextBox();
             this.optionsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this._chkSavePassword = new System.Windows.Forms.CheckBox();
             this._chkSaveAsDefaultConnection = new System.Windows.Forms.CheckBox();
@@ -57,14 +59,17 @@ namespace RfoLogViewer.Forms
             this.layout.Controls.Add(this._txtDataSource, 1, 2);
             this.layout.Controls.Add(this.lblContextId, 0, 3);
             this.layout.Controls.Add(this._txtContextId, 1, 3);
-            this.layout.Controls.Add(this.optionsPanel, 1, 4);
-            this.layout.Controls.Add(this.hint, 0, 5);
-            this.layout.Controls.Add(this.footer, 0, 6);
+            this.layout.Controls.Add(this.lblUserConfigPath, 0, 4);
+            this.layout.Controls.Add(this._txtUserConfigPath, 1, 4);
+            this.layout.Controls.Add(this.optionsPanel, 1, 5);
+            this.layout.Controls.Add(this.hint, 0, 6);
+            this.layout.Controls.Add(this.footer, 0, 7);
             this.layout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.layout.Location = new System.Drawing.Point(0, 0);
             this.layout.Name = "layout";
             this.layout.Padding = new System.Windows.Forms.Padding(12);
-            this.layout.RowCount = 7;
+            this.layout.RowCount = 8;
+            this.layout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
             this.layout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
             this.layout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
             this.layout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
@@ -74,7 +79,7 @@ namespace RfoLogViewer.Forms
             this.layout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.layout.SetColumnSpan(this.hint, 2);
             this.layout.SetColumnSpan(this.footer, 2);
-            this.layout.Size = new System.Drawing.Size(520, 280);
+            this.layout.Size = new System.Drawing.Size(520, 314);
             this.layout.TabIndex = 0;
             //
             // lblLogin
@@ -156,6 +161,25 @@ namespace RfoLogViewer.Forms
             this._txtContextId.Size = new System.Drawing.Size(340, 23);
             this._txtContextId.TabIndex = 7;
             //
+            // lblUserConfigPath
+            //
+            this.lblUserConfigPath.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblUserConfigPath.Location = new System.Drawing.Point(15, 148);
+            this.lblUserConfigPath.Name = "lblUserConfigPath";
+            this.lblUserConfigPath.Size = new System.Drawing.Size(144, 34);
+            this.lblUserConfigPath.TabIndex = 8;
+            this.lblUserConfigPath.Text = "user.config path";
+            this.lblUserConfigPath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // _txtUserConfigPath
+            //
+            this._txtUserConfigPath.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._txtUserConfigPath.Location = new System.Drawing.Point(165, 151);
+            this._txtUserConfigPath.Name = "_txtUserConfigPath";
+            this._txtUserConfigPath.ReadOnly = true;
+            this._txtUserConfigPath.Size = new System.Drawing.Size(340, 23);
+            this._txtUserConfigPath.TabIndex = 9;
+            //
             // optionsPanel
             //
             this.optionsPanel.AutoSize = true;
@@ -164,10 +188,10 @@ namespace RfoLogViewer.Forms
             this.optionsPanel.Controls.Add(this._chkSaveAsDefaultConnection);
             this.optionsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.optionsPanel.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
-            this.optionsPanel.Location = new System.Drawing.Point(165, 151);
+            this.optionsPanel.Location = new System.Drawing.Point(165, 185);
             this.optionsPanel.Name = "optionsPanel";
             this.optionsPanel.Size = new System.Drawing.Size(340, 28);
-            this.optionsPanel.TabIndex = 8;
+            this.optionsPanel.TabIndex = 10;
             this.optionsPanel.WrapContents = false;
             //
             // _chkSavePassword
@@ -198,10 +222,10 @@ namespace RfoLogViewer.Forms
             //
             this.hint.Dock = System.Windows.Forms.DockStyle.Fill;
             this.hint.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.hint.Location = new System.Drawing.Point(15, 185);
+            this.hint.Location = new System.Drawing.Point(15, 219);
             this.hint.Name = "hint";
             this.hint.Size = new System.Drawing.Size(490, 34);
-            this.hint.TabIndex = 9;
+            this.hint.TabIndex = 11;
             this.hint.Text = "DB connection id is the TNS name (alias) or data source\r\n(like adb-xxx.ad.regbanking.net/db1_pdb1).";
             //
             // footer
@@ -214,13 +238,13 @@ namespace RfoLogViewer.Forms
             this.footer.Controls.Add(this.excelPanel, 1, 0);
             this.footer.Controls.Add(this.okCancelPanel, 2, 0);
             this.footer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.footer.Location = new System.Drawing.Point(15, 222);
+            this.footer.Location = new System.Drawing.Point(15, 256);
             this.footer.Name = "footer";
             this.footer.Padding = new System.Windows.Forms.Padding(0, 3, 0, 0);
             this.footer.RowCount = 1;
             this.footer.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
             this.footer.Size = new System.Drawing.Size(490, 43);
-            this.footer.TabIndex = 10;
+            this.footer.TabIndex = 12;
             //
             // footerSpacer
             //
@@ -296,7 +320,7 @@ namespace RfoLogViewer.Forms
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this._btnCancel;
-            this.ClientSize = new System.Drawing.Size(520, 280);
+            this.ClientSize = new System.Drawing.Size(520, 314);
             this.Controls.Add(this.layout);
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -327,6 +351,8 @@ namespace RfoLogViewer.Forms
         private System.Windows.Forms.ComboBox _txtDataSource;
         private System.Windows.Forms.Label lblContextId;
         private System.Windows.Forms.TextBox _txtContextId;
+        private System.Windows.Forms.Label lblUserConfigPath;
+        private System.Windows.Forms.TextBox _txtUserConfigPath;
         private System.Windows.Forms.FlowLayoutPanel optionsPanel;
         private System.Windows.Forms.CheckBox _chkSavePassword;
         private System.Windows.Forms.CheckBox _chkSaveAsDefaultConnection;

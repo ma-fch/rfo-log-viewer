@@ -3,6 +3,7 @@ using RfoLogViewer.Properties;
 using RfoLogViewer.Services;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Windows.Forms;
 
 namespace RfoLogViewer.Forms
@@ -26,6 +27,7 @@ namespace RfoLogViewer.Forms
             if (!this.DesignMode)
             {
                 this.Icon = AppIcon.Get();
+                this._txtUserConfigPath.Text = this.GetUserConfigPath();
                 this.LoadSavedSettings();
                 this.EnableExcelFileDragDrop(this);
             }
@@ -136,6 +138,18 @@ namespace RfoLogViewer.Forms
         private long ParseContextId(string value)
         {
             return long.TryParse((value ?? string.Empty).Trim(), out var contextId) ? contextId : 0;
+        }
+
+        private string GetUserConfigPath()
+        {
+            try
+            {
+                return ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         private void TxtDataSource_SelectionChangeCommitted(object sender, EventArgs e)
