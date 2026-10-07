@@ -45,6 +45,7 @@ namespace RfoLogViewer.Forms
         private int _findLastRow = -1;
         private int _findLastColumn = -1;
         private bool _findHadMatch;
+        private bool _sortDescending;
 
         public ExcelLogViewerForm()
         {
@@ -99,6 +100,14 @@ namespace RfoLogViewer.Forms
         private void FindItem_Click(object sender, EventArgs e) => this.ShowFindDialog();
         private void FindNextItem_Click(object sender, EventArgs e) => this.FindNext();
         private void FindPreviousItem_Click(object sender, EventArgs e) => this.FindPrevious();
+        private void SortDescendingItem_Click(object sender, EventArgs e)
+        {
+            this._sortDescending = this.sortDescendingItem.Checked;
+            if (this._tree.SelectedNode != null)
+            {
+                this.Tree_AfterSelect(this._tree, new TreeViewEventArgs(this._tree.SelectedNode));
+            }
+        }
         private void TreeCopyMenuItem_Click(object sender, EventArgs e) => this.CopySelectedTreeNodeLabel();
         private void Grid_ColumnLayoutChanged(object sender, EventArgs e) => this.ScheduleColumnLayoutSave();
         private void Split_SplitterMoved(object sender, SplitterEventArgs e)
@@ -237,12 +246,13 @@ namespace RfoLogViewer.Forms
             switch (tag.ItemType)
             {
                 case ExcelTreeItemType.LogSession:
-                    entries = this._entries
+                    var query = this._entries
                         .Where(entry => entry.LogStructId.HasValue && tag.FilterLogStructIds.Contains(entry.LogStructId.Value))
                         .Where(entry => !string.Equals(entry.Function, "LOG_BEGIN", StringComparison.OrdinalIgnoreCase))
-                        .Where(entry => !string.Equals(entry.Function, "LOG_END", StringComparison.OrdinalIgnoreCase))
-                        .OrderBy(entry => entry.LogId)
-                        .ToList();
+                        .Where(entry => !string.Equals(entry.Function, "LOG_END", StringComparison.OrdinalIgnoreCase));
+                    entries = this._sortDescending
+                        ? query.OrderByDescending(entry => entry.LogId).ToList()
+                        : query.OrderBy(entry => entry.LogId).ToList();
                     break;
                 default:
                     this._grid.DataSource = null;

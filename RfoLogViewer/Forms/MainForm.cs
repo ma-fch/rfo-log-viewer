@@ -77,6 +77,7 @@ namespace RfoLogViewer.Forms
 		private int _findLastRow = -1;
 		private int _findLastColumn = -1;
 		private bool _findHadMatch;
+		private bool _sortDescending;
 
 		public MainForm()
 		{
@@ -140,6 +141,14 @@ namespace RfoLogViewer.Forms
 		private void FindItem_Click(object sender, EventArgs e) => this.ShowFindDialog();
 		private void FindNextItem_Click(object sender, EventArgs e) => this.FindNext();
 		private void FindPreviousItem_Click(object sender, EventArgs e) => this.FindPrevious();
+		private void SortDescendingItem_Click(object sender, EventArgs e)
+		{
+			this._sortDescending = this.sortDescendingItem.Checked;
+			if (this._tree.SelectedNode != null)
+			{
+				this.LoadGridForNode(this._tree.SelectedNode);
+			}
+		}
 		private void TreeCopyMenuItem_Click(object sender, EventArgs e) => this.CopySelectedTreeNodeLabel();
 		private void TreeDeleteLogStructMenuItem_Click(object sender, EventArgs e) => this.DeleteSelectedLogStruct();
 		private void ViewQueryMenuItem_Click(object sender, EventArgs e) => this.ViewSelectedLogQuery();
@@ -643,7 +652,7 @@ namespace RfoLogViewer.Forms
 		private void BindLogTable(string whereClause)
 		{
 			this._isLogTableView = true;
-			var entries = this._repository.LoadLogTable(whereClause);
+			var entries = this.ApplyLogSort(this._repository.LoadLogTable(whereClause));
 			this._grid.DataSource = null;
 			this._grid.Columns.Clear();
 			this._grid.AutoGenerateColumns = false;
@@ -675,7 +684,7 @@ namespace RfoLogViewer.Forms
 		private void BindLogStruct(string whereClause)
 		{
 			this._isLogTableView = false;
-			var table = this._repository.LoadLogStruct(whereClause);
+			var table = this.ApplyLogSort(this._repository.LoadLogStruct(whereClause));
 			this._grid.DataSource = null;
 			this._grid.Columns.Clear();
 			this._grid.AutoGenerateColumns = true;
@@ -714,6 +723,32 @@ namespace RfoLogViewer.Forms
 					column.HeaderText = header;
 				}
 			}
+		}
+
+		private IList<LogEntry> ApplyLogSort(IList<LogEntry> entries)
+		{
+			if (!this._sortDescending || (entries == null) || (entries.Count <= 1))
+			{
+				return entries;
+			}
+
+			return entries.Reverse().ToList();
+		}
+
+		private DataTable ApplyLogSort(DataTable table)
+		{
+			if (!this._sortDescending || (table == null) || (table.Rows.Count <= 1))
+			{
+				return table;
+			}
+
+			var reversed = table.Clone();
+			for (var i = table.Rows.Count - 1; i >= 0; i--)
+			{
+				reversed.ImportRow(table.Rows[i]);
+			}
+
+			return reversed;
 		}
 
 		private void AddColumn(string header, string propertyName, int width, string format = null)

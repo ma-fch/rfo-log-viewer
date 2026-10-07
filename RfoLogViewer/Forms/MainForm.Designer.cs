@@ -29,6 +29,8 @@ namespace RfoLogViewer.Forms
             this.findItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findNextItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findPreviousItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.viewMenu = new System.Windows.Forms.ToolStripDropDownButton();
+            this.sortDescendingItem = new System.Windows.Forms.ToolStripMenuItem();
             this._logStructColumnsMenu = new System.Windows.Forms.ToolStripDropDownButton();
             this._logTableColumnsMenu = new System.Windows.Forms.ToolStripDropDownButton();
             this._lblStatus = new System.Windows.Forms.ToolStripLabel();
@@ -57,6 +59,7 @@ namespace RfoLogViewer.Forms
             this._toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.dataMenu,
             this.findMenu,
+            this.viewMenu,
             this._logStructColumnsMenu,
             this._logTableColumnsMenu,
             this._lblStatus});
@@ -155,6 +158,22 @@ namespace RfoLogViewer.Forms
             this.findPreviousItem.Size = new System.Drawing.Size(180, 22);
             this.findPreviousItem.Text = "Find Previous";
             this.findPreviousItem.Click += new System.EventHandler(this.FindPreviousItem_Click);
+            //
+            // viewMenu
+            //
+            this.viewMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.sortDescendingItem});
+            this.viewMenu.Name = "viewMenu";
+            this.viewMenu.Size = new System.Drawing.Size(45, 22);
+            this.viewMenu.Text = "View";
+            //
+            // sortDescendingItem
+            //
+            this.sortDescendingItem.CheckOnClick = true;
+            this.sortDescendingItem.Name = "sortDescendingItem";
+            this.sortDescendingItem.Size = new System.Drawing.Size(180, 22);
+            this.sortDescendingItem.Text = "Sort descending";
+            this.sortDescendingItem.Click += new System.EventHandler(this.SortDescendingItem_Click);
             //
             // _logStructColumnsMenu
             //
@@ -315,6 +334,8 @@ namespace RfoLogViewer.Forms
         private System.Windows.Forms.ToolStripMenuItem findItem;
         private System.Windows.Forms.ToolStripMenuItem findNextItem;
         private System.Windows.Forms.ToolStripMenuItem findPreviousItem;
+        private System.Windows.Forms.ToolStripDropDownButton viewMenu;
+        private System.Windows.Forms.ToolStripMenuItem sortDescendingItem;
         private System.Windows.Forms.ToolStripDropDownButton _logStructColumnsMenu;
         private System.Windows.Forms.ToolStripDropDownButton _logTableColumnsMenu;
         private System.Windows.Forms.ToolStripLabel _lblStatus;
