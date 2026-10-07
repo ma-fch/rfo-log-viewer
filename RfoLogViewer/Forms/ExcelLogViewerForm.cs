@@ -59,6 +59,7 @@ namespace RfoLogViewer.Forms
             this.Text = $"RFo Log Viewer - {Path.GetFileName(filePath)}";
             this.Icon = AppIcon.Get();
             this.LoadWindowSettings();
+            this.LoadSortDescendingSetting();
 
             this._logTableColumnVisibility = ColumnVisibilityStore.Load(
                 Settings.Default.ExcelLogTableColumnVisibility,
@@ -103,6 +104,7 @@ namespace RfoLogViewer.Forms
         private void SortDescendingItem_Click(object sender, EventArgs e)
         {
             this._sortDescending = this.sortDescendingItem.Checked;
+            this.SaveSortDescendingSetting();
             if (this._tree.SelectedNode != null)
             {
                 this.Tree_AfterSelect(this._tree, new TreeViewEventArgs(this._tree.SelectedNode));
@@ -318,6 +320,18 @@ namespace RfoLogViewer.Forms
             this._savedSplitterDistance = settings.ExcelLogViewerSplitterDistance > 0
                 ? settings.ExcelLogViewerSplitterDistance
                 : 380;
+        }
+
+        private void LoadSortDescendingSetting()
+        {
+            this._sortDescending = Settings.Default.SortDescending;
+            this.sortDescendingItem.Checked = this._sortDescending;
+        }
+
+        private void SaveSortDescendingSetting()
+        {
+            Settings.Default.SortDescending = this._sortDescending;
+            Settings.Default.Save();
         }
 
         private void TryRestoreSplitterDistance()

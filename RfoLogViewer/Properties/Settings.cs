@@ -147,5 +147,13 @@ namespace RfoLogViewer.Properties
             get => (int)this[nameof(ExcelLogViewerSplitterDistance)];
             set => this[nameof(ExcelLogViewerSplitterDistance)] = value;
         }
+
+        [UserScopedSetting]
+        [DefaultSettingValue("False")]
+        public bool SortDescending
+        {
+            get => (bool)this[nameof(SortDescending)];
+            set => this[nameof(SortDescending)] = value;
+        }
     }
 }

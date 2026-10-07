@@ -94,6 +94,7 @@ namespace RfoLogViewer.Forms
 			this.InitializeTitle();
 			this.Icon = AppIcon.Get();
 			this.LoadWindowSettings();
+			this.LoadSortDescendingSetting();
 			this.LoadColumnVisibilitySettings();
 			this._tree.ImageList = LogTreeImageList.Get();
 			this.PopulateColumnVisibilityMenus();
@@ -144,6 +145,7 @@ namespace RfoLogViewer.Forms
 		private void SortDescendingItem_Click(object sender, EventArgs e)
 		{
 			this._sortDescending = this.sortDescendingItem.Checked;
+			this.SaveSortDescendingSetting();
 			if (this._tree.SelectedNode != null)
 			{
 				this.LoadGridForNode(this._tree.SelectedNode);
@@ -818,6 +820,18 @@ namespace RfoLogViewer.Forms
 			this.Width = settings.MainFormWidth > 0 ? settings.MainFormWidth : 1400;
 			this.Height = settings.MainFormHeight > 0 ? settings.MainFormHeight : 900;
 			this._savedSplitterDistance = settings.SplitterDistance > 0 ? settings.SplitterDistance : 380;
+		}
+
+		private void LoadSortDescendingSetting()
+		{
+			this._sortDescending = Settings.Default.SortDescending;
+			this.sortDescendingItem.Checked = this._sortDescending;
+		}
+
+		private void SaveSortDescendingSetting()
+		{
+			Settings.Default.SortDescending = this._sortDescending;
+			Settings.Default.Save();
 		}
 
 		private void TryRestoreSplitterDistance()
