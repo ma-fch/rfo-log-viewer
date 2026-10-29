@@ -1120,6 +1120,9 @@ namespace RfoLogViewer.Forms
 					this.UpdateStatusFromChildren(ancestor);
 				}
 
+				// Allow BeforeExpand to load real children while restoring expansion.
+				// Otherwise previously expanded sessions keep the "..." placeholder.
+				this._loadingTreeNode = false;
 				this.RestoreExpandedNodeKeysInSubtree(selectedNode, expandedKeys);
 
 				if (!string.IsNullOrEmpty(selectedKey))
